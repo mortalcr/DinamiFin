@@ -123,7 +123,6 @@ const Dashboard = () => {
             break;
         }
       } catch (err) {
-        // Si el error es que ya existe, intentar actualizar
         if (err.message && err.message.includes("ya existe")) {
           console.log("Registro existente, actualizando...");
           switch (type) {
@@ -147,20 +146,16 @@ const Dashboard = () => {
         }
       }
 
-      // Forzar la recarga de datos
       await loadData();
 
-      // Esperar un momento para asegurar que los datos se hayan actualizado
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Recargar los datos una vez más para asegurar que todo esté actualizado
       await loadData();
 
       setIsAddFormOpen(false);
       showNotification("Registro guardado exitosamente");
     } catch (err) {
       console.error("Error al guardar registro:", err);
-      // Si el error es 400 pero el registro se guardó, mostrar mensaje de éxito
       if (err.message && err.message.includes("400")) {
         await loadData();
         setIsAddFormOpen(false);
