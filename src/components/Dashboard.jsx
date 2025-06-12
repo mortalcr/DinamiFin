@@ -7,7 +7,9 @@ import {
   FaWallet,
   FaPiggyBank,
   FaDollarSign,
+  FaCalendarAlt,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import {
   getExpenses,
   getSavings,
@@ -36,13 +38,13 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState(null);
 
-  // Función para mostrar notificaciones
+  const navigate = useNavigate();
+
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Función para cargar todos los datos
   const loadData = async () => {
     try {
       setLoading(true);
@@ -106,10 +108,9 @@ const Dashboard = () => {
 
   const handleAddRecord = async (data) => {
     try {
-      const userId = 1; // Por ahora hardcodeado
+      const userId = 1;
       const { type, amount, category, date } = data;
 
-      // Intentar crear el registro
       try {
         switch (type) {
           case "gasto":
@@ -137,7 +138,6 @@ const Dashboard = () => {
               break;
           }
         } else {
-          // Si el registro se guardó a pesar del error 400, continuar
           if (err.message && err.message.includes("400")) {
             console.log("Registro guardado a pesar del error 400");
           } else {
@@ -147,9 +147,7 @@ const Dashboard = () => {
       }
 
       await loadData();
-
       await new Promise((resolve) => setTimeout(resolve, 500));
-
       await loadData();
 
       setIsAddFormOpen(false);
@@ -161,17 +159,14 @@ const Dashboard = () => {
         setIsAddFormOpen(false);
         showNotification("Registro guardado exitosamente");
       } else {
-        showNotification(
-          err.message || "Error al guardar el registro",
-          "error"
-        );
+        showNotification(err.message || "Error al guardar el registro", "error");
       }
     }
   };
 
   const handleEditRecord = async (data) => {
     try {
-      const userId = 1; // Por ahora hardcodeado
+      const userId = 1;
       const { type, date, amount, category } = data;
 
       switch (type) {
@@ -191,16 +186,13 @@ const Dashboard = () => {
       showNotification("Registro actualizado exitosamente");
     } catch (err) {
       console.error("Error al actualizar registro:", err);
-      showNotification(
-        err.message || "Error al actualizar el registro",
-        "error"
-      );
+      showNotification(err.message || "Error al actualizar el registro", "error");
     }
   };
 
   const handleDeleteRecord = async (record) => {
     try {
-      const userId = 1; // Por ahora hardcodeado
+      const userId = 1;
       const { type, date } = record;
 
       switch (type) {
@@ -242,7 +234,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#F2F3F4]">
-      {/* Notificación */}
       {notification && (
         <div
           className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
@@ -253,25 +244,31 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-[#1F3B4D]">DinamiFin</h1>
-            <button
-              onClick={() => setIsAddFormOpen(true)}
-              className="flex items-center gap-2 bg-[#1F3B4D] hover:bg-[#1F3B4D]/90 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              <FaPlus className="w-4 h-4" />
-              <span>Agregar Registro</span>
-            </button>
+            <div className="flex gap-4">
+              <button
+                onClick={() => navigate("/mesActual")}
+                className="flex items-center gap-2 bg-[#3498DB] hover:bg-[#2980B9] text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <FaCalendarAlt className="w-4 h-4" />
+                <span>Datos Mes Actual</span>
+              </button>
+              <button
+                onClick={() => setIsAddFormOpen(true)}
+                className="flex items-center gap-2 bg-[#1F3B4D] hover:bg-[#1F3B4D]/90 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <FaPlus className="w-4 h-4" />
+                <span>Agregar Registro</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center gap-4">
@@ -316,7 +313,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Lista de registros recientes */}
         <div className="bg-white rounded-lg shadow-sm border border-[#F2F3F4]">
           <div className="p-6 border-b border-[#F2F3F4]">
             <h2 className="text-lg font-semibold text-[#1F3B4D]">
@@ -399,14 +395,12 @@ const Dashboard = () => {
         </div>
       </main>
 
-      {/* Formulario para agregar registro */}
       <AddRecordForm
         isOpen={isAddFormOpen}
         onClose={() => setIsAddFormOpen(false)}
         onSubmit={handleAddRecord}
       />
 
-      {/* Formulario para editar registro */}
       <EditRecord
         isOpen={selectedRecord !== null}
         onClose={() => setSelectedRecord(null)}
