@@ -8,6 +8,7 @@ import {
   FaPiggyBank,
   FaDollarSign,
   FaCalendarAlt,
+  FaFileImport,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import {
@@ -255,6 +256,13 @@ const Dashboard = () => {
               >
                 <FaCalendarAlt className="w-4 h-4" />
                 <span>Datos Mes Actual</span>
+              </button>
+              <button
+                onClick={() => navigate("/importar")}
+                className="flex items-center gap-2 bg-[#9B59B6] hover:bg-[#8E44AD] text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <FaFileImport className="w-4 h-4" />
+                <span>Importar Datos</span>
               </button>
               <button
                 onClick={() => setIsAddFormOpen(true)}

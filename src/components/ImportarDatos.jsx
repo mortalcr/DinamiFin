@@ -1,241 +1,240 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Snackbar,
-  Alert,
-  Typography,
-  Paper,
-  CircularProgress
-} from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import Papa from 'papaparse';
+import React, { useState } from "react";
+import { importarDatos } from "../services/importService";
+import { FaFileUpload, FaSpinner, FaInfoCircle, FaArrowLeft } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const ImportarDatos = () => {
-  const [tipoDato, setTipoDato] = useState('');
-  const [archivo, setArchivo] = useState(null);
+  const [file, setFile] = useState(null);
+  const [tipo, setTipo] = useState("expense");
   const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
+  const [message, setMessage] = useState(null);
+  const [showExample, setShowExample] = useState(false);
+  const userId = 1;
+  const navigate = useNavigate();
 
-  const tiposDatos = [
-    { value: 'ingresos', label: 'Ingresos', categorias: ['Salario', 'Freelance', 'Inversiones', 'Otros'] },
-    { value: 'gastos', label: 'Gastos', categorias: ['Alimentación', 'Transporte', 'Vivienda', 'Entretenimiento', 'Otros'] },
-    { value: 'ahorros', label: 'Ahorros', categorias: ['Cuenta de Ahorro', 'Fondo de Emergencia', 'Otros'] },
-    { value: 'inversiones', label: 'Inversiones', categorias: ['Acciones', 'Bonos', 'Criptomonedas', 'Otros'] },
-    { value: 'metas', label: 'Metas', categorias: ['Gasto', 'Ahorro', 'Inversión'] }
-  ];
-
-  const validarFecha = (fecha) => {
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(fecha)) return false;
-    
-    const date = new Date(fecha);
-    return date instanceof Date && !isNaN(date);
-  };
-
-  const validarMonto = (monto) => {
-    const numero = parseFloat(monto);
-    return !isNaN(numero) && numero >= 0;
-  };
-
-  const validarCategoria = (categoria, tipo) => {
-    const tipoSeleccionado = tiposDatos.find(t => t.value === tipo);
-    return tipoSeleccionado?.categorias.includes(categoria) || false;
-  };
-
-  const validarDatos = (datos, tipo) => {
-    const errores = [];
-    
-    datos.forEach((fila, index) => {
-      if (!validarFecha(fila.fecha)) {
-        errores.push(`Fila ${index + 1}: Fecha inválida (${fila.fecha}). Debe ser YYYY-MM-DD`);
-      }
-      if (!validarMonto(fila.monto)) {
-        errores.push(`Fila ${index + 1}: Monto inválido (${fila.monto}). Debe ser un número mayor o igual a 0`);
-      }
-      if (!validarCategoria(fila.categoria, tipo)) {
-        errores.push(`Fila ${index + 1}: Categoría inválida (${fila.categoria}) para el tipo ${tipo}`);
-      }
-    });
-
-    return errores;
-  };
-
-  const handleTipoDatoChange = (event) => {
-    setTipoDato(event.target.value);
-  };
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === 'text/csv') {
-      setArchivo(file);
-    } else {
-      setSnackbar({
-        open: true,
-        message: 'Por favor, seleccione un archivo CSV válido',
-        severity: 'error'
-      });
+  const getExampleCSV = () => {
+    switch (tipo) {
+      case "expense":
+        return "date,amount,category\n2024-03-20,150.50,Alimentación\n2024-03-20,75.25,Transporte";
+      case "income":
+        return "date,amount\n2024-03-20,2500.00\n2024-03-20,500.00";
+      case "saving":
+        return "date,amount,category\n2024-03-20,1000.00,Emergencia\n2024-03-20,500.00,Vacaciones";
+      case "investment":
+        return "date,amount,category\n2024-03-20,2000.00,Acciones\n2024-03-20,1500.00,Bonos";
+      case "expense_goal":
+      case "saving_goal":
+      case "investment_goal":
+        return "date,value\n2024-03-20,5000.00\n2024-03-20,10000.00";
+      default:
+        return "";
     }
   };
 
-  const procesarCSV = (file) => {
-    return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        header: true,
-        complete: (results) => {
-          resolve(results.data);
-        },
-        error: (error) => {
-          reject(error);
-        }
-      });
-    });
-  };
-
-  const handleImportar = async () => {
-    if (!tipoDato || !archivo) {
-      setSnackbar({
-        open: true,
-        message: 'Por favor, seleccione el tipo de dato y un archivo',
-        severity: 'error'
-      });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!file) {
+      setMessage({ type: "error", text: "Por favor, selecciona un archivo" });
       return;
     }
 
     setLoading(true);
+    setMessage(null);
     try {
-      const datos = await procesarCSV(archivo);
-      const errores = validarDatos(datos, tipoDato);
-
-      if (errores.length > 0) {
-        setSnackbar({
-          open: true,
-          message: `Errores encontrados:\n${errores.join('\n')}`,
-          severity: 'error'
-        });
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('file', archivo);
-      formData.append('tipo', tipoDato);
-      formData.append('datos', JSON.stringify(datos));
-
-      const response = await fetch('http://localhost:8000/api/importacion/importar', {
-        method: 'POST',
-        body: formData
+      const res = await importarDatos(file, tipo, userId);
+      setMessage({ 
+        type: "success", 
+        text: `Importación exitosa: ${res.registros_importados} registros importados correctamente` 
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Error al importar los datos');
-      }
-
-      const result = await response.json();
-      setSnackbar({
-        open: true,
-        message: `${result.message}\nRegistros importados: ${result.registros_importados}`,
-        severity: 'success'
-      });
-
-      // Limpiar el formulario
-      setTipoDato('');
-      setArchivo(null);
+      setFile(null);
+      // Reset file input
+      e.target.reset();
     } catch (error) {
-      setSnackbar({
-        open: true,
-        message: `Error al procesar el archivo: ${error.message}`,
-        severity: 'error'
+      setMessage({ 
+        type: "error", 
+        text: error.message || "Error al importar los datos" 
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (selectedFile.type !== "text/csv") {
+        setMessage({ type: "error", text: "Por favor, selecciona un archivo CSV" });
+        e.target.value = null;
+        setFile(null);
+      } else if (selectedFile.size > 10 * 1024 * 1024) { // 10MB
+        setMessage({ type: "error", text: "El archivo no debe superar los 10MB" });
+        e.target.value = null;
+        setFile(null);
+      } else {
+        setFile(selectedFile);
+        setMessage(null);
+      }
+    }
+  };
+
+  const handleTipoChange = (e) => {
+    setTipo(e.target.value);
+    setShowExample(false);
+  };
+
+  const handleBackToDashboard = () => {
+    navigate('/');
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, maxWidth: 600, mx: 'auto', mt: 4 }}>
-      <Typography variant="h5" component="h2" gutterBottom>
-        Importar Datos
-      </Typography>
-      
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <FormControl fullWidth>
-          <InputLabel id="tipo-dato-label">Tipo de Dato</InputLabel>
-          <Select
-            labelId="tipo-dato-label"
-            value={tipoDato}
-            label="Tipo de Dato"
-            onChange={handleTipoDatoChange}
-          >
-            {tiposDatos.map((tipo) => (
-              <MenuItem key={tipo.value} value={tipo.value}>
-                {tipo.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+    <div className="min-h-screen bg-[#F2F3F4] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+          <div className="mb-8">
+            <button
+              onClick={handleBackToDashboard}
+              className="inline-flex items-center gap-2 text-[#3498DB] hover:text-[#2980B9] transition-colors mb-4"
+            >
+              <FaArrowLeft />
+              <span>Volver</span>
+            </button>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-[#1F3B4D] mb-2">
+                Importar Datos
+              </h1>
+              <p className="text-[#95A5A6]">
+                Sube tu archivo CSV para importar tus datos financieros
+              </p>
+            </div>
+          </div>
 
-        <Button
-          variant="outlined"
-          component="label"
-          startIcon={<CloudUploadIcon />}
-          fullWidth
-          disabled={loading}
-        >
-          Seleccionar Archivo CSV
-          <input
-            type="file"
-            hidden
-            accept=".csv"
-            onChange={handleFileChange}
-          />
-        </Button>
+          {message && (
+            <div
+              className={`mb-6 p-4 rounded-lg ${
+                message.type === "success"
+                  ? "bg-[#2ECC71]/10 text-[#2ECC71]"
+                  : "bg-[#E74C3C]/10 text-[#E74C3C]"
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
 
-        {archivo && (
-          <Typography variant="body2" color="text.secondary">
-            Archivo seleccionado: {archivo.name}
-          </Typography>
-        )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-[#F8F9FA] p-4 rounded-lg">
+              <label
+                htmlFor="tipo"
+                className="block text-sm font-medium text-[#1F3B4D] mb-2"
+              >
+                Tipo de Datos
+              </label>
+              <select
+                id="tipo"
+                value={tipo}
+                onChange={handleTipoChange}
+                className="w-full px-4 py-2 border border-[#E2E8F0] rounded-lg focus:ring-2 focus:ring-[#3498DB] focus:border-transparent bg-white"
+              >
+                <option value="expense">Gastos</option>
+                <option value="income">Ingresos</option>
+                <option value="saving">Ahorros</option>
+                <option value="investment">Inversiones</option>
+                <option value="expense_goal">Meta de Gastos</option>
+                <option value="saving_goal">Meta de Ahorros</option>
+                <option value="investment_goal">Meta de Inversiones</option>
+              </select>
+            </div>
 
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleImportar}
-          disabled={!tipoDato || !archivo || loading}
-          fullWidth
-        >
-          {loading ? <CircularProgress size={24} /> : 'Importar'}
-        </Button>
-      </Box>
+            <div className="bg-[#F8F9FA] p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-4">
+                <label
+                  htmlFor="file"
+                  className="block text-sm font-medium text-[#1F3B4D]"
+                >
+                  Archivo CSV
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowExample(!showExample)}
+                  className="text-sm text-[#3498DB] hover:text-[#2980B9] flex items-center gap-1"
+                >
+                  <FaInfoCircle />
+                  {showExample ? "Ocultar ejemplo" : "Ver ejemplo"}
+                </button>
+              </div>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%', whiteSpace: 'pre-line' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Paper>
+              {showExample && (
+                <div className="mb-4 p-4 bg-white rounded-lg border border-[#E2E8F0]">
+                  <p className="text-sm text-[#1F3B4D] mb-2">Ejemplo de formato CSV:</p>
+                  <pre className="text-xs text-[#95A5A6] whitespace-pre-wrap bg-[#F8F9FA] p-2 rounded">
+                    {getExampleCSV()}
+                  </pre>
+                </div>
+              )}
+
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[#E2E8F0] border-dashed rounded-lg hover:border-[#3498DB] transition-colors bg-white">
+                <div className="space-y-1 text-center">
+                  <FaFileUpload className="mx-auto h-12 w-12 text-[#95A5A6]" />
+                  <div className="flex text-sm text-[#95A5A6]">
+                    <label
+                      htmlFor="file-upload"
+                      className="relative cursor-pointer rounded-md font-medium text-[#3498DB] hover:text-[#2980B9] focus-within:outline-none"
+                    >
+                      <span>Sube un archivo</span>
+                      <input
+                        id="file-upload"
+                        name="file-upload"
+                        type="file"
+                        accept=".csv"
+                        onChange={handleFileChange}
+                        className="sr-only"
+                      />
+                    </label>
+                    <p className="pl-1">o arrastra y suelta</p>
+                  </div>
+                  <p className="text-xs text-[#95A5A6]">
+                    Solo archivos CSV hasta 10MB
+                  </p>
+                </div>
+              </div>
+              {file && (
+                <p className="mt-2 text-sm text-[#1F3B4D]">
+                  Archivo seleccionado: {file.name}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <button
+                type="button"
+                onClick={handleBackToDashboard}
+                className="flex-1 px-4 py-2 border border-[#E2E8F0] rounded-lg text-[#1F3B4D] hover:bg-[#F8F9FA] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loading || !file}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors ${
+                  loading || !file
+                    ? "bg-[#95A5A6] cursor-not-allowed"
+                    : "bg-[#3498DB] hover:bg-[#2980B9]"
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    <span>Importando...</span>
+                  </>
+                ) : (
+                  <span>Importar Datos</span>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default ImportarDatos; 
+export default ImportarDatos;
