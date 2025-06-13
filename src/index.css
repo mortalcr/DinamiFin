@@ -21,7 +21,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
 a {
   font-weight: 500;
   color: var(--color-primary);
@@ -33,19 +32,10 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--color-light);
 }
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-  color: var(--color-primary);
-}
-
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -78,4 +68,9 @@ button:focus-visible {
   button {
     background-color: var(--color-primary);
   }
+}
+.apexcharts-tooltip {
+  background: #ffffff !important;
+  color: #000000 !important;        
+  border-radius: 8px !important; 
 }
