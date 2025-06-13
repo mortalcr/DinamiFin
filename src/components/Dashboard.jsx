@@ -7,7 +7,7 @@ import {
   FaWallet,
   FaPiggyBank,
   FaDollarSign,
-  FaCalendarAlt,
+  FaFileImport,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import {
@@ -250,11 +250,11 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold text-[#1F3B4D]">DinamiFin</h1>
             <div className="flex gap-4">
               <button
-                onClick={() => navigate("/mesActual")}
-                className="flex items-center gap-2 bg-[#3498DB] hover:bg-[#2980B9] text-white px-4 py-2 rounded-lg transition-colors"
+                onClick={() => navigate("/importar")}
+                className="flex items-center gap-2 bg-[#9B59B6] hover:bg-[#8E44AD] text-white px-4 py-2 rounded-lg transition-colors"
               >
-                <FaCalendarAlt className="w-4 h-4" />
-                <span>Datos Mes Actual</span>
+                <FaFileImport className="w-4 h-4" />
+                <span>Importar Datos</span>
               </button>
               <button
                 onClick={() => setIsAddFormOpen(true)}
@@ -332,63 +332,79 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {records
-                  .sort(
-                    (a, b) =>
-                      new Date(b.date).getTime() - new Date(a.date).getTime()
-                  )
-                  .slice(0, 10)
-                  .map((record) => (
-                    <div
-                      key={record.id}
-                      onClick={() => setSelectedRecord(record)}
-                      className="flex items-center justify-between p-4 border border-[#F2F3F4] rounded-lg hover:bg-[#F2F3F4]/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-2 rounded-full ${
-                            record.type === "gasto"
-                              ? "bg-[#E74C3C]/10 text-[#E74C3C]"
-                              : record.type === "ahorro"
-                              ? "bg-[#2ECC71]/10 text-[#2ECC71]"
-                              : "bg-[#F39C12]/10 text-[#F39C12]"
-                          }`}
-                        >
-                          {record.type === "gasto" ? (
-                            <FaDollarSign className="w-4 h-4" />
-                          ) : record.type === "ahorro" ? (
-                            <FaPiggyBank className="w-4 h-4" />
-                          ) : (
-                            <FaChartLine className="w-4 h-4" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium capitalize text-[#1F3B4D]">
-                            {record.category}
-                          </p>
-                          <p className="text-sm text-[#95A5A6]">
-                            {record.date}
-                          </p>
-                        </div>
+                {records.map((record) => (
+                  <div
+                    key={record.id}
+                    className="flex items-center justify-between p-4 bg-[#F8F9FA] rounded-lg hover:bg-[#F2F3F4] transition-colors cursor-pointer"
+                    onClick={() => setSelectedRecord(record)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`p-3 rounded-lg ${
+                          record.type === "gasto"
+                            ? "bg-[#E74C3C]/10"
+                            : record.type === "ahorro"
+                            ? "bg-[#2ECC71]/10"
+                            : "bg-[#F39C12]/10"
+                        }`}
+                      >
+                        {record.type === "gasto" ? (
+                          <FaWallet
+                            className={`w-5 h-5 ${
+                              record.type === "gasto"
+                                ? "text-[#E74C3C]"
+                                : record.type === "ahorro"
+                                ? "text-[#2ECC71]"
+                                : "text-[#F39C12]"
+                            }`}
+                          />
+                        ) : record.type === "ahorro" ? (
+                          <FaPiggyBank
+                            className={`w-5 h-5 ${
+                              record.type === "gasto"
+                                ? "text-[#E74C3C]"
+                                : record.type === "ahorro"
+                                ? "text-[#2ECC71]"
+                                : "text-[#F39C12]"
+                            }`}
+                          />
+                        ) : (
+                          <FaChartLine
+                            className={`w-5 h-5 ${
+                              record.type === "gasto"
+                                ? "text-[#E74C3C]"
+                                : record.type === "ahorro"
+                                ? "text-[#2ECC71]"
+                                : "text-[#F39C12]"
+                            }`}
+                          />
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-semibold ${
-                            record.type === "gasto"
-                              ? "text-[#E74C3C]"
-                              : record.type === "ahorro"
-                              ? "text-[#2ECC71]"
-                              : "text-[#F39C12]"
-                          }`}
-                        >
-                          ${record.amount.toLocaleString()}
+                      <div>
+                        <p className="font-medium text-[#1F3B4D] capitalize">
+                          {record.category}
                         </p>
-                        <p className="text-xs text-[#95A5A6] capitalize">
-                          {record.type}
-                        </p>
+                        <p className="text-sm text-[#95A5A6]">{record.date}</p>
                       </div>
                     </div>
-                  ))}
+                    <div className="text-right">
+                      <p
+                        className={`font-semibold ${
+                          record.type === "gasto"
+                            ? "text-[#E74C3C]"
+                            : record.type === "ahorro"
+                            ? "text-[#2ECC71]"
+                            : "text-[#F39C12]"
+                        }`}
+                      >
+                        ${record.amount.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-[#95A5A6] capitalize">
+                        {record.type}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
