@@ -3,7 +3,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./components/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
-import MesActual from "./components/mesActual";
 import ImportarDatos from "./components/ImportarDatos";
 
 function App() {
@@ -15,7 +14,6 @@ function App() {
         <Route path="/" element={token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/mesActual" element={<MesActual />} />
         <Route
           path="/importar"
           element={
