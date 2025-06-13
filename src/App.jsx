@@ -4,11 +4,12 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MesActual from "./components/mesActual";
-import DashboardHistorico from "./DashboardHistorico";
-
+import DashboardHistorico from "./pages/DashboardHistorico";
+import Navbar from "./components/Navbar";
 function App() {
   return (
     <Router>
+     <Navbar></Navbar>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />

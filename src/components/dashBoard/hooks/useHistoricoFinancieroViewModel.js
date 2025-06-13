@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react";
 import {
   fetchIncomeHistory,
   fetchExpenseHistory,
@@ -7,15 +7,20 @@ import {
   fetchExpenseGoalHistory,
   fetchSavingGoalHistory,
   fetchInvestmentGoalHistory,
-} from "../utils/financeApi"
-import { PALETA } from "../utils/colors"
-
-export function useHistoricoFinancieroViewModel(historicos, tiposGraficos, periodo, historico, tipoGrafico, userId) {
-  const [chartData, setChartData] = useState(null)
-  const [chartOptions, setChartOptions] = useState(null)
-  const [datos, setDatos] = useState([])
-  const [loading, setLoading] = useState(true)
-
+} from "../../../services/financeHistoryApi";
+import { PALETA } from "../utils/colors";
+export function useHistoricoFinancieroViewModel(
+  historicos,
+  tiposGraficos,
+  periodo,
+  historico,
+  tipoGrafico,
+  userId
+) {
+  const [chartData, setChartData] = useState([]);
+  const [chartOptions, setChartOptions] = useState({});
+  const [datos, setDatos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const colores = {
     ingreso: PALETA.verde,
     gasto: PALETA.rojo,
@@ -24,88 +29,101 @@ export function useHistoricoFinancieroViewModel(historicos, tiposGraficos, perio
     meta_gasto: PALETA.rojo,
     meta_ahorro: PALETA.azul,
     meta_inversion: PALETA.naranja,
-  }
-
-  const esMeta = historico.startsWith("meta_")
-  const tipoMeta = esMeta ? historico.replace("meta_", "") : null
-
+  };
+  const esMeta = historico.startsWith("meta_");
+  const tipoMeta = esMeta ? historico.replace("meta_", "") : null;
   useEffect(() => {
-    let fetcher
+    let fetcher = null;
     if (esMeta) {
       switch (historico) {
-        case "meta_gasto": fetcher = fetchExpenseGoalHistory; break
-        case "meta_ahorro": fetcher = fetchSavingGoalHistory; break
-        case "meta_inversion": fetcher = fetchInvestmentGoalHistory; break
-        default: break
+        case "meta_gasto":
+          fetcher = fetchExpenseGoalHistory;
+          break;
+        case "meta_ahorro":
+          fetcher = fetchSavingGoalHistory;
+          break;
+        case "meta_inversion":
+          fetcher = fetchInvestmentGoalHistory;
+          break;
+        default:
+          break;
       }
     } else {
       switch (historico) {
-        case "ingreso": fetcher = fetchIncomeHistory; break
-        case "gasto": fetcher = fetchExpenseHistory; break
-        case "ahorro": fetcher = fetchSavingHistory; break
-        case "inversion": fetcher = fetchInvestmentHistory; break
-        default: break
+        case "ingreso":
+          fetcher = fetchIncomeHistory;
+          break;
+        case "gasto":
+          fetcher = fetchExpenseHistory;
+          break;
+        case "ahorro":
+          fetcher = fetchSavingHistory;
+          break;
+        case "inversion":
+          fetcher = fetchInvestmentHistory;
+          break;
+        default:
+          break;
       }
     }
-    setLoading(true)
-    fetcher(userId, periodo)
-      .then((resp) => {
-        setDatos(resp.data)
-      })
-      .catch(() => setDatos([]))
-      .finally(() => setLoading(false))
-  }, [userId, periodo, historico])
-
+    setLoading(true);
+    if (userId && fetcher) {
+      fetcher(userId, periodo)
+        .then((resp) => setDatos(resp.data))
+        .catch(() => setDatos([]))
+        .finally(() => setLoading(false));
+    } else {
+      setDatos([]);
+      setLoading(false);
+    }
+  }, [userId, periodo, historico, esMeta]);
   useEffect(() => {
     if (!datos.length) {
-      setChartData([])
-      setChartOptions({})
-      return
+      setChartData([]);
+      setChartOptions({});
+      return;
     }
+    let series = [];
+    const meses = [...new Set(datos.map((d) => d.period))].sort();
 
-    // Prepara datos para la gráfica
-    let series = []
-    let categorias = datos.map((d) => d.period)
     if (esMeta) {
       series = [
-        {
-          name: "Real",
-          data: datos.map((d) => d.real),
-        },
-        {
-          name: "Meta",
-          data: datos.map((d) => d.goal),
-        },
-      ]
+        { name: "Real", data: datos.map((d) => d.real ?? 0) },
+        { name: "Meta", data: datos.map((d) => d.goal ?? 0) },
+      ];
     } else {
-      series = [
-        {
-          name: historico,
-          data: datos.map((d) => d.total),
-        },
-      ]
+      series = [{ name: historico, data: datos.map((d) => d.total ?? 0) }];
     }
-
     const baseOptions = {
       chart: {
         id: "historico-financiero",
         fontFamily: "Inter, sans-serif",
         toolbar: { show: false },
+        zoom: { enabled: false },
         background: PALETA.grisClaro,
       },
       colors: esMeta ? [colores[tipoMeta], PALETA.gris] : [colores[historico]],
       xaxis: {
-        categories: categorias,
+        categories: meses,
         labels: {
-          style: { colors: PALETA.azul, fontSize: "12px", fontFamily: "Inter, sans-serif" },
+          style: {
+            colors: PALETA.azul,
+            fontSize: "12px",
+            fontFamily: "Inter, sans-serif",
+          },
         },
         axisBorder: { show: true, color: PALETA.gris },
         axisTicks: { show: true, borderType: "solid", color: PALETA.gris },
       },
       yaxis: {
         labels: {
-          formatter: (val) => "$" + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ","),
-          style: { colors: PALETA.azul, fontSize: "12px", fontFamily: "Inter, sans-serif" },
+          formatter: (val) =>
+            "$" + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ","),
+          style: {
+            colors: PALETA.azul,
+            fontSize: "12px",
+            fontFamily: "Inter, sans-serif",
+          },
         },
       },
       grid: { borderColor: PALETA.gris, strokeDashArray: 3, opacity: 0.2 },
@@ -118,10 +136,11 @@ export function useHistoricoFinancieroViewModel(historicos, tiposGraficos, perio
         itemMargin: { horizontal: 10, vertical: 0 },
       },
       tooltip: {
-        theme: "light",
+        theme: "dark",
         x: { show: true },
         y: {
-          formatter: (val) => "$" + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ","),
+          formatter: (val) =>
+            "$" + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ","),
           title: { formatter: (seriesName) => seriesName },
         },
         marker: { show: true },
@@ -135,7 +154,9 @@ export function useHistoricoFinancieroViewModel(historicos, tiposGraficos, perio
       dataLabels: { enabled: false },
       markers: {
         size: 5,
-        colors: esMeta ? [colores[tipoMeta], PALETA.gris] : [colores[historico]],
+        colors: esMeta
+          ? [colores[tipoMeta], PALETA.gris]
+          : [colores[historico]],
         strokeWidth: 0,
         hover: { size: 7 },
       },
@@ -148,11 +169,11 @@ export function useHistoricoFinancieroViewModel(historicos, tiposGraficos, perio
           },
         },
       ],
-    }
+    };
 
-    let specificOptions = {}
+    let specificOptions = {};
     if (tipoGrafico === "line") {
-      specificOptions = { chart: { type: "line" }, fill: { opacity: 1 } }
+      specificOptions = { chart: { type: "line" }, fill: { opacity: 1 } };
     } else if (tipoGrafico === "area") {
       specificOptions = {
         chart: { type: "area" },
@@ -169,7 +190,7 @@ export function useHistoricoFinancieroViewModel(historicos, tiposGraficos, perio
             colorStops: [],
           },
         },
-      }
+      };
     } else if (tipoGrafico === "bar") {
       specificOptions = {
         chart: { type: "bar" },
@@ -181,23 +202,43 @@ export function useHistoricoFinancieroViewModel(historicos, tiposGraficos, perio
           },
         },
         fill: { opacity: 1 },
-      }
+      };
       if (esMeta) {
-        specificOptions.chart.type = "line"
+        specificOptions.chart.type = "line";
         specificOptions.stroke = {
           width: [0, 2],
           curve: "straight",
           dashArray: [0, 5],
-        }
-        specificOptions.fill = { opacity: [1, 0] }
-        series[0].type = "column"
-        series[1].type = "line"
+        };
+        specificOptions.fill = { opacity: [1, 0] };
+        series[0].type = "column";
+        series[1].type = "line";
       }
     }
 
-    setChartData(series)
-    setChartOptions({ ...baseOptions, ...specificOptions })
-  }, [datos, tipoGrafico, esMeta, tipoMeta, historico, historicos, tiposGraficos])
+    setChartData(series);
+    setChartOptions({
+      ...baseOptions,
+      ...specificOptions,
+      chart: {
+        ...baseOptions.chart,
+        ...specificOptions.chart,
+        toolbar: { show: false },
+        zoom: { enabled: false },
+      },
+      tooltip: { enabled: true },
+    });
+  }, [
+    datos,
+    tipoGrafico,
+    esMeta,
+    tipoMeta,
+    historico,
+    historicos,
+    tiposGraficos,
+  ]);
 
-  return { chartData, chartOptions, datos, loading }
+  return { chartData, chartOptions, datos, loading };
 }
+
+export default useHistoricoFinancieroViewModel;

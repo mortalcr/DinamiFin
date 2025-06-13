@@ -5,8 +5,8 @@ export default function ChartDescription({ historicoActual }) {
     <div
       className="rounded-lg p-4 mb-6 border"
       style={{
-        backgroundColor: `${PALETA.grisClaro}CC`, // 80% opacity (hex 'CC')
-        borderColor: `${PALETA.gris}33`            // 20% opacity (hex '33')
+        backgroundColor: `${PALETA.grisClaro}CC`, 
+        borderColor: `${PALETA.gris}33`            
       }}
     >
       <div className="flex items-start gap-3">

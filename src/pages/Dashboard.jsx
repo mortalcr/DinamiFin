@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDashboard } from "../services/authService";
+import { useUser } from "../context/UserContext";
 
 function Dashboard() {
-  const [user, setUser] = useState(null);
+  const { user, setUser } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -12,17 +13,19 @@ function Dashboard() {
       navigate("/");
       return;
     }
-
-    getDashboard(token)
-      .then((res) => setUser(res))
-      .catch(() => {
-        localStorage.removeItem("token");
-        navigate("/");
-      });
-  }, [navigate]);
+    if (!user) {
+      getDashboard(token)
+        .then((res) => setUser(res))
+        .catch(() => {
+          localStorage.removeItem("token");
+          setUser(null);
+          navigate("/");
+        });
+    }
+  }, [navigate, user, setUser]);
 
   if (!user) return <div className="text-center p-8">Cargando...</div>;
-
+  console.log("User data:", user);
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Bienvenido, {user.username}</h1>
@@ -33,4 +36,3 @@ function Dashboard() {
 }
 
 export default Dashboard;
-
