@@ -10,6 +10,7 @@ import {
   FaFileImport,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 import {
   getExpenses,
   getSavings,
@@ -23,162 +24,226 @@ import {
   deleteExpense,
   deleteSaving,
   deleteInvestment,
+  getCurrentMonthIncome,
 } from "../services/api";
 
 const Dashboard = () => {
+  const { user } = useUser();
+  const navigate = useNavigate();
+  
+  // State for UI
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(null);
+  
+  // State for data
   const [records, setRecords] = useState([]);
   const [totals, setTotals] = useState({
     expenses: 0,
     savings: 0,
     investments: 0,
+    income: 0
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [notification, setNotification] = useState(null);
+  const [currentMonthTotals, setCurrentMonthTotals] = useState({
+    expenses: 0,
+    savings: 0,
+    investments: 0,
+    income: 0
+  });
 
-  const navigate = useNavigate();
-
+  // Show notification helper function
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // Función para obtener el primer y último día del mes actual
+  const getCurrentMonthRange = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return { firstDay, lastDay };
+  };
+
+  // Función para verificar si una fecha está en el mes actual
+  const isDateInCurrentMonth = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    return date.getMonth() === today.getMonth() && 
+           date.getFullYear() === today.getFullYear();
+  };
+
+  // Function to load data
   const loadData = async () => {
+    console.log('Usuario actual en Dashboard:', user);
+    
+    if (!user || user.id === undefined) {
+      console.log('Usuario no autenticado o sin ID, no se pueden cargar los datos');
+      setError('No se pudo cargar la información del usuario. Por favor, inicia sesión nuevamente.');
+      setLoading(false);
+      return;
+    }
+    
+    console.log('Cargando datos para el usuario ID:', user.id);
+    
     try {
       setLoading(true);
       setError(null);
-
-      const [expenses, savings, investments] = await Promise.all([
-        getExpenses(1),
-        getSavings(1),
-        getInvestments(1),
+      
+      // Hacer todas las peticiones en paralelo
+      const [expenses, savings, investments, monthlyIncome] = await Promise.all([
+        getExpenses(user.id),
+        getSavings(user.id),
+        getInvestments(user.id),
+        getCurrentMonthIncome(user.id)
       ]);
+      
+      console.log('Datos recibidos:', { expenses, savings, investments, monthlyIncome });
 
+      // Calcular totales generales
       const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
       const totalSavings = savings.reduce((sum, sav) => sum + sav.amount, 0);
-      const totalInvestments = investments.reduce(
-        (sum, inv) => sum + inv.amount,
-        0
-      );
+      const totalInvestments = investments.reduce((sum, inv) => sum + inv.amount, 0);
 
       setTotals({
         expenses: totalExpenses,
         savings: totalSavings,
         investments: totalInvestments,
+        income: monthlyIncome || 0
+      });
+
+      // Calcular totales del mes actual
+      const currentMonthExpenses = expenses
+        .filter(exp => isDateInCurrentMonth(exp.date))
+        .reduce((sum, exp) => sum + exp.amount, 0);
+
+      const currentMonthSavings = savings
+        .filter(sav => isDateInCurrentMonth(sav.date))
+        .reduce((sum, sav) => sum + sav.amount, 0);
+
+      const currentMonthInvestments = investments
+        .filter(inv => isDateInCurrentMonth(inv.date))
+        .reduce((sum, inv) => sum + inv.amount, 0);
+
+      setCurrentMonthTotals({
+        expenses: currentMonthExpenses,
+        savings: currentMonthSavings,
+        investments: currentMonthInvestments,
+        income: monthlyIncome || 0
       });
 
       const allRecords = [
         ...expenses.map((exp) => ({
           id: `exp-${exp.date}`,
-          type: "gasto",
+          type: 'gasto',
           amount: exp.amount,
           category: exp.category,
-          date: exp.date.split("T")[0],
+          date: exp.date.split('T')[0],
         })),
         ...savings.map((sav) => ({
           id: `sav-${sav.date}`,
-          type: "ahorro",
+          type: 'ahorro',
           amount: sav.amount,
           category: sav.category,
-          date: sav.date.split("T")[0],
+          date: sav.date.split('T')[0],
         })),
         ...investments.map((inv) => ({
           id: `inv-${inv.date}`,
-          type: "inversion",
+          type: 'inversion',
           amount: inv.amount,
           category: inv.category,
-          date: inv.date.split("T")[0],
+          date: inv.date.split('T')[0],
         })),
       ];
 
       setRecords(allRecords);
     } catch (err) {
-      setError(err.message);
-      console.error("Error cargando datos:", err);
+      console.error('Error cargando datos:', err);
+      setError('Error al cargar los datos. ' + (err.message || ''));
     } finally {
       setLoading(false);
     }
   };
 
+  // Cargar datos del dashboard cuando cambie el usuario
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user?.id]); // Recargar cuando cambie el ID del usuario
 
   const handleAddRecord = async (data) => {
+    if (!user || !user.id) {
+      showNotification("No se pudo identificar al usuario. Por favor, inicia sesión nuevamente.", "error");
+      return;
+    }
+    
     try {
-      const userId = 1;
-      const { type, amount, category, date } = data;
-
-      try {
-        switch (type) {
-          case "gasto":
-            await createExpense(userId, { amount, category, date });
-            break;
-          case "ahorro":
-            await createSaving(userId, { amount, category, date });
-            break;
-          case "inversion":
-            await createInvestment(userId, { amount, category, date });
-            break;
-        }
-      } catch (err) {
-        if (err.message && err.message.includes("ya existe")) {
-          console.log("Registro existente, actualizando...");
-          switch (type) {
-            case "gasto":
-              await updateExpense(userId, date, { amount, category });
-              break;
-            case "ahorro":
-              await updateSaving(userId, date, { amount, category });
-              break;
-            case "inversion":
-              await updateInvestment(userId, date, { amount, category });
-              break;
-          }
-        } else {
-          if (err.message && err.message.includes("400")) {
-            console.log("Registro guardado a pesar del error 400");
-          } else {
-            throw err;
-          }
-        }
+      // Asegurarse de que el ID del usuario esté incluido en los datos
+      const recordData = {
+        ...data,
+        userId: user.id
+      };
+      
+      if (data.type === 'gasto') {
+        await createExpense(user.id, { 
+          amount: data.amount, 
+          category: data.category, 
+          date: data.date 
+        });
+      } else if (data.type === 'ahorro') {
+        await createSaving(user.id, { 
+          amount: data.amount, 
+          category: data.category, 
+          date: data.date 
+        });
+      } else if (data.type === 'inversion') {
+        await createInvestment(user.id, { 
+          amount: data.amount, 
+          category: data.category, 
+          date: data.date 
+        });
       }
 
+      // Recargar los datos
       await loadData();
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       await loadData();
 
       setIsAddFormOpen(false);
       showNotification("Registro guardado exitosamente");
     } catch (err) {
       console.error("Error al guardar registro:", err);
-      if (err.message && err.message.includes("400")) {
-        await loadData();
-        setIsAddFormOpen(false);
-        showNotification("Registro guardado exitosamente");
-      } else {
-        showNotification(err.message || "Error al guardar el registro", "error");
-      }
+      const errorMessage = err.response?.data?.detail || err.message || "Error al guardar el registro";
+      showNotification(errorMessage, "error");
     }
   };
 
   const handleEditRecord = async (data) => {
+    if (!user || !user.id) {
+      showNotification("No se pudo identificar al usuario. Por favor, inicia sesión nuevamente.", "error");
+      return;
+    }
+    
     try {
-      const userId = 1;
-      const { type, date, amount, category } = data;
-
-      switch (type) {
-        case "gasto":
-          await updateExpense(userId, date, { amount, category });
-          break;
-        case "ahorro":
-          await updateSaving(userId, date, { amount, category });
-          break;
-        case "inversion":
-          await updateInvestment(userId, date, { amount, category });
-          break;
+      // Verificar que el registro pertenezca al usuario actual
+      if (data.userId && data.userId !== user.id) {
+        throw new Error("No tienes permiso para editar este registro");
+      }
+      
+      const updateData = {
+        amount: data.amount,
+        category: data.category
+      };
+      
+      if (data.type === 'gasto') {
+        await updateExpense(user.id, data.originalDate || data.date, updateData);
+      } else if (data.type === 'ahorro') {
+        await updateSaving(user.id, data.originalDate || data.date, updateData);
+      } else if (data.type === 'inversion') {
+        await updateInvestment(user.id, data.originalDate || data.date, updateData);
       }
 
       await loadData();
@@ -186,25 +251,29 @@ const Dashboard = () => {
       showNotification("Registro actualizado exitosamente");
     } catch (err) {
       console.error("Error al actualizar registro:", err);
-      showNotification(err.message || "Error al actualizar el registro", "error");
+      const errorMessage = err.response?.data?.detail || err.message || "Error al actualizar el registro";
+      showNotification(errorMessage, "error");
     }
   };
 
   const handleDeleteRecord = async (record) => {
+    if (!user || !user.id) {
+      showNotification("No se pudo identificar al usuario. Por favor, inicia sesión nuevamente.", "error");
+      return;
+    }
+    
     try {
-      const userId = 1;
-      const { type, date } = record;
-
-      switch (type) {
-        case "gasto":
-          await deleteExpense(userId, date);
-          break;
-        case "ahorro":
-          await deleteSaving(userId, date);
-          break;
-        case "inversion":
-          await deleteInvestment(userId, date);
-          break;
+      // Verificar que el registro pertenezca al usuario actual
+      if (record.userId && record.userId !== user.id) {
+        throw new Error("No tienes permiso para eliminar este registro");
+      }
+      
+      if (record.type === 'gasto') {
+        await deleteExpense(user.id, record.originalDate || record.date);
+      } else if (record.type === 'ahorro') {
+        await deleteSaving(user.id, record.originalDate || record.date);
+      } else if (record.type === 'inversion') {
+        await deleteInvestment(user.id, record.originalDate || record.date);
       }
 
       await loadData();
@@ -212,28 +281,43 @@ const Dashboard = () => {
       showNotification("Registro eliminado exitosamente");
     } catch (err) {
       console.error("Error al eliminar registro:", err);
-      showNotification(err.message || "Error al eliminar el registro", "error");
+      const errorMessage = err.response?.data?.detail || err.message || "Error al eliminar el registro";
+      showNotification(errorMessage, "error");
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F2F3F4] flex items-center justify-center">
-        <p className="text-[#1F3B4D]">Cargando datos...</p>
+      <div className="min-h-screen bg-[#F2F3F4] flex flex-col items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3B4D] mb-4"></div>
+        <p className="text-[#1F3B4D] text-lg font-medium">Cargando datos...</p>
+        <p className="text-[#95A5A6] text-sm mt-2">
+          {user ? `Usuario ID: ${user.id || 'No disponible'}` : 'No hay usuario autenticado'}
+        </p>
+        {error && <p className="text-red-500 mt-2">Error: {error}</p>}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#F2F3F4] flex items-center justify-center">
-        <p className="text-[#E74C3C]">Error: {error}</p>
+      <div className="min-h-screen bg-[#F2F3F4] flex flex-col items-center justify-center p-4">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 w-full max-w-md">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-[#1F3B4D] hover:bg-[#F39C12] text-white font-semibold py-2 px-4 rounded transition-colors"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F2F3F4]">
+    <div className="min-h-screen bg-[#F2F3F4] pt-16 md:pt-20">
       {notification && (
         <div
           className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
@@ -269,16 +353,30 @@ const Dashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-[#3498DB]/10 rounded-lg">
+                <FaDollarSign className="w-6 h-6 text-[#3498DB]" />
+              </div>
+              <div>
+                <p className="text-[#95A5A6] text-sm">Ingresos del Mes</p>
+                <p className="text-2xl font-bold text-[#1F3B4D]">
+                  ${currentMonthTotals.income.toLocaleString('es-GT')}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-[#E74C3C]/10 rounded-lg">
                 <FaWallet className="w-6 h-6 text-[#E74C3C]" />
               </div>
               <div>
-                <p className="text-[#95A5A6] text-sm">Gastos Totales</p>
+                <p className="text-[#95A5A6] text-sm">Gastos del Mes</p>
                 <p className="text-2xl font-bold text-[#1F3B4D]">
-                  ${totals.expenses.toLocaleString()}
+                  ${currentMonthTotals.expenses.toLocaleString('es-GT')}
                 </p>
               </div>
             </div>
@@ -290,9 +388,9 @@ const Dashboard = () => {
                 <FaPiggyBank className="w-6 h-6 text-[#2ECC71]" />
               </div>
               <div>
-                <p className="text-[#95A5A6] text-sm">Ahorros Totales</p>
+                <p className="text-[#95A5A6] text-sm">Ahorros del Mes</p>
                 <p className="text-2xl font-bold text-[#1F3B4D]">
-                  ${totals.savings.toLocaleString()}
+                  ${currentMonthTotals.savings.toLocaleString('es-GT')}
                 </p>
               </div>
             </div>
@@ -304,9 +402,9 @@ const Dashboard = () => {
                 <FaChartLine className="w-6 h-6 text-[#F39C12]" />
               </div>
               <div>
-                <p className="text-[#95A5A6] text-sm">Inversiones Totales</p>
+                <p className="text-[#95A5A6] text-sm">Inversiones del Mes</p>
                 <p className="text-2xl font-bold text-[#1F3B4D]">
-                  ${totals.investments.toLocaleString()}
+                  ${currentMonthTotals.investments.toLocaleString('es-GT')}
                 </p>
               </div>
             </div>

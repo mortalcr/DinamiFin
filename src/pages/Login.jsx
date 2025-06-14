@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
-import { login } from "../services/authService";
+import { login as loginService } from "../services/api";
+import { useUser } from "../context/UserContext";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { setUser } = useUser();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -26,16 +28,43 @@ function Login() {
     }
 
     try {
-      const data = await login(email, password);
-      localStorage.setItem("token", data.access_token);
-      navigate("/dashboard");
-    } catch (err) {
-      if (err.response?.status === 401) {
-        setError("Correo o contraseña incorrectos.");
-      } else if (err.response?.status === 422) {
-        setError("Formato inválido. Verifica tu correo y contraseña.");
+      const data = await loginService(email, password);
+      console.log('Respuesta del login:', data);
+      
+      if (data.access_token) {
+        localStorage.setItem("token", data.access_token);
+        
+        // Verificar que tenemos el user_id
+        if (!data.user_id) {
+          console.error('No se recibió el ID del usuario en la respuesta del login');
+          throw new Error('Error en la autenticación: falta el ID de usuario');
+        }
+        
+        // Establecer el usuario en el contexto
+        const userData = {
+          id: data.user_id,
+          email: email,
+          username: data.username || email.split('@')[0],
+        };
+        
+        console.log('Estableciendo usuario en el contexto:', userData);
+        setUser(userData);
+        
+        // Navegar al dashboard después de establecer el usuario
+        navigate("/dashboard");
       } else {
-        setError("Error al iniciar sesión. Intenta de nuevo más tarde.");
+        setError("La respuesta del servidor no contiene el token de acceso");
+      }
+    } catch (err) {
+      console.error('Error en el login:', err);
+      if (err.message.includes('401')) {
+        setError("Correo o contraseña incorrectos.");
+      } else if (err.message.includes('422')) {
+        setError("Formato de correo o contraseña inválido.");
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError("Error al conectar con el servidor. Intenta de nuevo más tarde.");
       }
     }
   };

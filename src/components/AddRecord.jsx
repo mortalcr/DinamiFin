@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { useUser } from "../context/UserContext";
 import {
   FaExclamationCircle,
   FaTimes,

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { useUser } from "../context/UserContext";
 import {
   FaTimes,
   FaTrash,
@@ -9,10 +10,20 @@ import {
 } from "react-icons/fa";
 
 export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
+  const { user } = useUser();
   const [formData, setFormData] = useState({
     amount: "",
     category: "",
   });
+
+  // Verificar si hay un usuario autenticado
+  useEffect(() => {
+    if (!user || !user.id) {
+      console.error('No hay usuario autenticado');
+      onClose();
+      return;
+    }
+  }, [user, onClose]);
 
   useEffect(() => {
     if (record) {
@@ -25,8 +36,15 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!user || !user.id) {
+      console.error('No hay usuario autenticado');
+      return;
+    }
+    
     onSubmit({
       ...record,
+      userId: user.id, // Incluir el ID del usuario
       amount: Number.parseFloat(formData.amount),
       category: formData.category,
       date: record.date.split("T")[0],
@@ -34,8 +52,16 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
   };
 
   const handleDelete = () => {
+    if (!user || !user.id) {
+      console.error('No hay usuario autenticado');
+      return;
+    }
+    
     if (window.confirm("¿Estás seguro de que deseas eliminar este registro?")) {
-      onDelete();
+      onDelete({
+        ...record,
+        userId: user.id // Incluir el ID del usuario
+      });
     }
   };
 
