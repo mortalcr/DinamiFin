@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useRef } from "react"
 import { AddRecordForm } from "./AddRecord"
 import { EditRecord } from "./EditRecord"
@@ -23,6 +21,7 @@ import {
   getCurrentMonthIncome,
   createIncome,
   updateIncome,
+  getRecordsForDate,
 } from "../services/api"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import {
@@ -426,35 +425,56 @@ const Dashboard = () => {
         userId: user.id,
       }
 
-      if (data.type === "gasto") {
-        await createExpense(user.id, {
-          amount: data.amount,
-          category: data.category,
-          date: data.date,
-        })
-      } else if (data.type === "ahorro") {
-        await createSaving(user.id, {
-          amount: data.amount,
-          category: data.category,
-          date: data.date,
-        })
-      } else if (data.type === "inversion") {
-        await createInvestment(user.id, {
-          amount: data.amount,
-          category: data.category,
-          date: data.date,
-        })
+      // Verificar si ya existe un registro para la fecha y el tipo
+      const existingRecords = await getRecordsForDate(user.id, data.date, data.type);
+      if (existingRecords.length > 0) {
+        // Actualizar el registro existente
+        if (data.type === "gasto") {
+          await updateExpense(user.id, data.date, {
+            amount: data.amount,
+            category: data.category,
+          })
+        } else if (data.type === "ahorro") {
+          await updateSaving(user.id, data.date, {
+            amount: data.amount,
+            category: data.category,
+          })
+        } else if (data.type === "inversion") {
+          await updateInvestment(user.id, data.date, {
+            amount: data.amount,
+            category: data.category,
+          })
+        }
+        showNotification("Registro actualizado exitosamente")
+      } else {
+        // Crear un nuevo registro
+        if (data.type === "gasto") {
+          await createExpense(user.id, {
+            amount: data.amount,
+            category: data.category,
+            date: data.date,
+          })
+        } else if (data.type === "ahorro") {
+          await createSaving(user.id, {
+            amount: data.amount,
+            category: data.category,
+            date: data.date,
+          })
+        } else if (data.type === "inversion") {
+          await createInvestment(user.id, {
+            amount: data.amount,
+            category: data.category,
+            date: data.date,
+          })
+        }
+        showNotification("Registro guardado exitosamente")
       }
 
       // Recargar los datos
       await loadData()
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      await loadData()
-
       setIsAddFormOpen(false)
-      showNotification("Registro guardado exitosamente")
     } catch (err) {
-      console.error("Error al guardar registro:", err)
+      console.error("Error al guardar o actualizar registro:", err)
       const errorMessage = err.response?.data?.detail || err.message || "Error al guardar el registro"
       showNotification(errorMessage, "error")
     }
@@ -594,7 +614,7 @@ const Dashboard = () => {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#1F3B4D]">DinamiFin</h1>
+            <h1 className="text-2xl font-bold text-[#FFFFFF]">DinamiFin</h1>
             <div className="flex gap-4">
               <button
                 onClick={() => navigate("/importar")}
@@ -713,7 +733,7 @@ const Dashboard = () => {
                         {recordFilter === "ahorros" && <FaPiggyBank className="w-4 h-4 text-[#3498DB]" />}
                         {recordFilter === "inversiones" && <FaChartLine className="w-4 h-4 text-[#F39C12]" />}
                         {recordFilter === "todos" && <FaFilter className="w-4 h-4 text-[#95A5A6]" />}
-                        <span className="text-sm font-medium text-[#1F3B4D] capitalize">
+                        <span className="text-sm font-medium text-white capitalize">
                           {recordFilter === "inversiones"
                             ? "Inversiones"
                             : recordFilter === "todos"

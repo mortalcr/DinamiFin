@@ -247,3 +247,20 @@ export const deleteInvestment = async (userId, date) => {
   );
   return handleResponse(response);
 };
+
+// Servicio para obtener registros por fecha
+export const getRecordsForDate = async (userId, date, type) => {
+  const response = await fetch(`${API_BASE_URL}/datos/${type}s/${userId}?date=${date}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Error al obtener los registros");
+  }
+
+  return response.json();
+};
