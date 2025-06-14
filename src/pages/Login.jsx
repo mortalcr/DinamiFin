@@ -1,20 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
-import { login } from "../services/authService";
+import { login as loginAPI } from "../services/authService";
+import { useUser } from "../context/UserContext";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { user, login } = useUser();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
+    if (user) {
       navigate("/dashboard");
     }
-  }, [navigate]);
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,9 +27,8 @@ function Login() {
     }
 
     try {
-      const data = await login(email, password);
-      localStorage.setItem("token", data.access_token);
-      navigate("/dashboard");
+      const data = await loginAPI(email, password);
+      login(data.access_token); 
     } catch (err) {
       if (err.response?.status === 401) {
         setError("Correo o contraseña incorrectos.");
@@ -88,7 +88,7 @@ function Login() {
           </button>
         </form>
 
-        <p className="mt-4 text-center">
+        <p className="mt-4 text-center text-[#1F3B4D]">
           ¿No tienes cuenta?{" "}
           <a href="/register" className="text-[#2ECC71] font-medium hover:underline">
             Regístrate aquí

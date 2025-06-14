@@ -1,48 +1,65 @@
 // src/components/Navbar.jsx
-import { Link, useNavigate } from "react-router-dom"
-import { useUser } from "../context/UserContext"
+import { useState, useRef, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
 
-export default function Navbar() {
-  const { user, setUser } = useUser()
-  const navigate = useNavigate()
+function Navbar() {
+  const { user, logout } = useContext(UserContext);
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    setUser(null)
-    navigate("/login")
-  }
+    logout();
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+  if (!user) return null;
 
   return (
-    <nav className="fixed top-0 left-0 w-full bg-[#1F3B4D] px-8 py-3 flex items-center justify-between shadow-md z-30">
-      <div className="flex items-center gap-8">
-        <span className="text-xl font-bold text-white tracking-wide">
-          DinamiFin
-        </span>
-        <Link to="/dashboard" className="text-white hover:text-[#F39C12] transition">
-          Dashboard
-        </Link>
-        <Link to="/dashboardHistorico" className="text-white hover:text-[#F39C12] transition">
-          Histórico
-        </Link>
-        <Link to="/mesActual" className="text-white hover:text-[#F39C12] transition">
-          Mes Actual
-        </Link>
-      </div>
-      <div className="flex items-center gap-4">
-        {user && (
-          <>
-            <span className="text-white font-semibold">
-              {user.username}
-            </span>
+    <nav className="bg-[#1F3B4D] text-white px-6 py-4 flex justify-between items-center shadow-md">
+      <h1 className="text-xl font-bold">DinamiFin</h1>
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="font-medium hover:underline"
+        >
+          {user.username || user.sub}
+        </button>
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white text-[#1F3B4D] rounded shadow-lg z-10">
             <button
+              className="block px-4 py-2 hover:bg-[#f4f4f4] w-full text-left"
+              onClick={() => {
+                setIsOpen(false);
+                navigate("/perfil");
+              }}
+            >
+              Ajustes de usuario
+            </button>
+            <button
+              className="block px-4 py-2 hover:bg-[#f4f4f4] w-full text-left"
               onClick={handleLogout}
-              className="bg-[#E74C3C] text-white px-4 py-1 rounded hover:bg-[#C0392B] transition"
             >
               Cerrar sesión
             </button>
-          </>
+          </div>
         )}
       </div>
     </nav>
-  )
+  );
 }
+
+export default Navbar;
+
