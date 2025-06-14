@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import { login as loginService } from "../services/api";
@@ -9,7 +9,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { loginUser } = useUser();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -29,37 +29,31 @@ function Login() {
 
     try {
       const data = await loginService(email, password);
-      console.log('Respuesta del login:', data);
-      
+      console.log("Respuesta del login:", data);
+
       if (data.access_token) {
-        localStorage.setItem("token", data.access_token);
-        
-        // Verificar que tenemos el user_id
+        const token = data.access_token;
+
         if (!data.user_id) {
-          console.error('No se recibió el ID del usuario en la respuesta del login');
-          throw new Error('Error en la autenticación: falta el ID de usuario');
+          throw new Error("Error en la autenticación: falta el ID de usuario");
         }
-        
-        // Establecer el usuario en el contexto
-        const userData = {
+
+        const userInfo = {
           id: data.user_id,
-          email: email,
-          username: data.username || email.split('@')[0],
+          email,
+          username: data.username || email.split("@")[0],
         };
-        
-        console.log('Estableciendo usuario en el contexto:', userData);
-        setUser(userData);
-        
-        // Navegar al dashboard después de establecer el usuario
+
+        loginUser(userInfo, token);
         navigate("/dashboard");
       } else {
         setError("La respuesta del servidor no contiene el token de acceso");
       }
     } catch (err) {
-      console.error('Error en el login:', err);
-      if (err.message.includes('401')) {
+      console.error("Error en el login:", err);
+      if (err.message.includes("401")) {
         setError("Correo o contraseña incorrectos.");
-      } else if (err.message.includes('422')) {
+      } else if (err.message.includes("422")) {
         setError("Formato de correo o contraseña inválido.");
       } else if (err.message) {
         setError(err.message);

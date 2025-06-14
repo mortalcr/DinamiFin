@@ -1,10 +1,10 @@
 // src/components/Navbar.jsx
-import { Link, useNavigate } from "react-router-dom"
-import { useUser } from "../context/UserContext"
+import { Link, useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 import { useState } from "react";
 
 export default function Navbar() {
-  const { user, logoutUser } = useUser();
+  const { user, logoutUser, loading } = useUser();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -13,6 +13,8 @@ export default function Navbar() {
     navigate("/login");
     setMenuOpen(false);
   };
+
+  if (loading) return null;
 
   const navLinks = user && (
     <>
@@ -37,11 +39,11 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-2">
-        {user?.username &&  (
+        {user && (
           <>
             <Link
               to="/perfil"
-              className="text-black bg-[#FFA] font-bold text-lg p-2 border rounded"
+              className="text-black bg-white font-bold text-lg p-2 rounded border-2 border-[#F39C12] "
             >
               {user.username}
             </Link>
@@ -53,6 +55,7 @@ export default function Navbar() {
             </button>
           </>
         )}
+
         {/* Menú hamburguesa para móviles */}
         <button
           className="md:hidden flex flex-col justify-center items-center w-10 h-10 focus:outline-none"
@@ -65,7 +68,6 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Menú desplegable para móviles */}
       {menuOpen && user && (
         <div className="absolute top-full left-0 w-full bg-[#1F3B4D] flex flex-col items-center py-4 shadow-lg md:hidden animate-fade-in z-40">
           {navLinks}

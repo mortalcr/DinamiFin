@@ -3,40 +3,78 @@ import { UserProvider } from "./context/UserContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./components/Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardHistorico from "./pages/DashboardHistorico";
-import Navbar from "./components/Navbar";
 import ImportarDatos from "./components/ImportarDatos";
+import Perfil from "./pages/Perfil"; 
+
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 
 function App() {
-  const token = localStorage.getItem("token");
-
   return (
     <UserProvider>
       <Router>
         <Navbar />
-      <Routes>
-        <Route path="/" element={token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboardHistorico" element={<DashboardHistorico />} />
-        <Route
-          path="/importar"
-          element={
-            <ProtectedRoute>
-              <ImportarDatos />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+        <Routes>
+          {/* Redirección raíz */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Rutas públicas */}
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+
+          {/* Rutas protegidas */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboardHistorico"
+            element={
+              <ProtectedRoute>
+                <DashboardHistorico />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/importar"
+            element={
+              <ProtectedRoute>
+                <ImportarDatos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/perfil"
+            element={
+              <ProtectedRoute>
+                <Perfil />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Fallback: cualquier ruta no encontrada */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
       </Router>
     </UserProvider>
   );
