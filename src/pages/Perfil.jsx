@@ -94,12 +94,10 @@ const Perfil = () => {
 
   const cerrarModal = () => {
     setMostrarModal(false);
-    // Si hubo cambio de username o contraseña, cerrar sesión
     if (formData.username !== originalData.username || formData.password) {
       logoutUser();
       navigate("/login");
     } else {
-      // Forzar recarga para ver reflejados los cambios
       window.location.reload();
     }
   };
