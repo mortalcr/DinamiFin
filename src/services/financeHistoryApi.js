@@ -1,6 +1,5 @@
 import axios from "axios"
 
-// Cambia la baseURL por la tuya real
 const API_URL = "http://localhost:8000/history"
 
 export const fetchIncomeHistory = (userId, periodo = "1y") =>
