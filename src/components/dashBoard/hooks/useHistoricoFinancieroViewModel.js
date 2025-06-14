@@ -9,6 +9,7 @@ import {
   fetchInvestmentGoalHistory,
 } from "../../../services/financeHistoryApi";
 import { PALETA } from "../utils/colors";
+
 export function useHistoricoFinancieroViewModel(
   historicos,
   tiposGraficos,
@@ -21,6 +22,7 @@ export function useHistoricoFinancieroViewModel(
   const [chartOptions, setChartOptions] = useState({});
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const colores = {
     ingreso: PALETA.verde,
     gasto: PALETA.rojo,
@@ -30,8 +32,10 @@ export function useHistoricoFinancieroViewModel(
     meta_ahorro: PALETA.azul,
     meta_inversion: PALETA.naranja,
   };
+
   const esMeta = historico.startsWith("meta_");
   const tipoMeta = esMeta ? historico.replace("meta_", "") : null;
+
   useEffect(() => {
     let fetcher = null;
     if (esMeta) {
@@ -77,6 +81,7 @@ export function useHistoricoFinancieroViewModel(
       setLoading(false);
     }
   }, [userId, periodo, historico, esMeta]);
+  
   useEffect(() => {
     if (!datos.length) {
       setChartData([]);
@@ -87,13 +92,22 @@ export function useHistoricoFinancieroViewModel(
     const meses = [...new Set(datos.map((d) => d.period))].sort();
 
     if (esMeta) {
+      // Cálculo de porcentaje real respecto al ingreso mensual
+      const realPercent = datos.map((d) =>
+        d.income > 0 ? (d.real / d.income) * 100 : 0
+      );
+      const goalPercent = datos.map((d) => d.goal ?? 0);
       series = [
-        { name: "Real", data: datos.map((d) => d.real ?? 0) },
-        { name: "Meta", data: datos.map((d) => d.goal ?? 0) },
+        { name: "Real (%)", data: realPercent },
+        { name: "Meta (%)", data: goalPercent },
       ];
     } else {
       series = [{ name: historico, data: datos.map((d) => d.total ?? 0) }];
     }
+    const valueFormatter = esMeta
+      ? (val) => val.toFixed(1) + " %"
+      : (val) => "$" + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
     const baseOptions = {
       chart: {
         id: "historico-financiero",
@@ -117,14 +131,14 @@ export function useHistoricoFinancieroViewModel(
       },
       yaxis: {
         labels: {
-          formatter: (val) =>
-            "$" + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ","),
+          formatter: valueFormatter,
           style: {
             colors: PALETA.azul,
             fontSize: "12px",
             fontFamily: "Inter, sans-serif",
           },
         },
+        min: 0,
       },
       grid: { borderColor: PALETA.gris, strokeDashArray: 3, opacity: 0.2 },
       legend: {
@@ -139,8 +153,7 @@ export function useHistoricoFinancieroViewModel(
         theme: "dark",
         x: { show: true },
         y: {
-          formatter: (val) =>
-            "$" + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ","),
+          formatter: valueFormatter,
           title: { formatter: (seriesName) => seriesName },
         },
         marker: { show: true },
@@ -228,7 +241,10 @@ export function useHistoricoFinancieroViewModel(
       },
       tooltip: { enabled: true },
     });
-  }, [
+  }, 
+  
+  
+  [
     datos,
     tipoGrafico,
     esMeta,
@@ -237,8 +253,18 @@ export function useHistoricoFinancieroViewModel(
     historicos,
     tiposGraficos,
   ]);
+  const totalMetaPeriodo = esMeta
+    ? datos.reduce(
+        (sum, d) => sum + (d.income > 0 ? (d.income * (d.goal ?? 0) / 100) : 0),
+        0
+      )
+    : null;
+  const totalHistoricoPeriodo = esMeta
+  ? datos.reduce((sum, d) => sum + (d.real ?? 0), 0)
+  : datos.reduce((sum, d) => sum + (d.total ?? 0), 0)
 
-  return { chartData, chartOptions, datos, loading };
+
+  return { chartData, chartOptions, datos, loading, totalMetaPeriodo, totalHistoricoPeriodo };
 }
 
 export default useHistoricoFinancieroViewModel;
