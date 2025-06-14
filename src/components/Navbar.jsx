@@ -1,22 +1,20 @@
 // src/components/Navbar.jsx
 import { Link, useNavigate } from "react-router-dom"
 import { useUser } from "../context/UserContext"
-
 import { useState } from "react";
 
 export default function Navbar() {
-  const { user, setUser } = useUser();
+  const { user, logoutUser } = useUser();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
+    logoutUser();
     navigate("/login");
     setMenuOpen(false);
   };
 
-  const navLinks = (
+  const navLinks = user && (
     <>
       <Link to="/dashboard" className="bg-white text-[#1F3B4D] font-semibold rounded border-2 border-[#F39C12] hover:bg-[#F39C12] hover:text-white transition block px-4 py-1 mx-1 shadow">
         Dashboard
@@ -37,16 +35,24 @@ export default function Navbar() {
           {navLinks}
         </div>
       </div>
+
       <div className="flex items-center gap-2">
-        <span className="text-white font-semibold hidden md:inline-block border border-white rounded px-2 py-1 bg-[#223B54]">
-          {user ? user.username : "Invitado"}
-        </span>
-        <button
-          onClick={handleLogout}
-          className="bg-[#F39C12] text-[#1F3B4D] font-bold px-4 py-1 rounded border-2 border-white hover:bg-white hover:text-[#F39C12] transition hidden md:inline-block shadow-lg"
-        >
-          Cerrar sesión
-        </button>
+        {user?.username &&  (
+          <>
+            <Link
+              to="/perfil"
+              className="text-black bg-[#FFA] font-bold text-lg p-2 border rounded"
+            >
+              {user.username}
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-[#F39C12] text-[#1F3B4D] font-bold px-4 py-1 rounded border-2 border-white hover:bg-white hover:text-[#F39C12] transition hidden md:inline-block shadow-lg"
+            >
+              Cerrar sesión
+            </button>
+          </>
+        )}
         {/* Menú hamburguesa para móviles */}
         <button
           className="md:hidden flex flex-col justify-center items-center w-10 h-10 focus:outline-none"
@@ -58,13 +64,18 @@ export default function Navbar() {
           <span className={`block w-6 h-0.5 bg-white transition-all ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
         </button>
       </div>
+
       {/* Menú desplegable para móviles */}
-      {menuOpen && (
+      {menuOpen && user && (
         <div className="absolute top-full left-0 w-full bg-[#1F3B4D] flex flex-col items-center py-4 shadow-lg md:hidden animate-fade-in z-40">
           {navLinks}
-          <span className="text-white font-semibold mb-2 border border-white rounded px-2 py-1 bg-[#223B54]">
-            {user ? user.username : "Invitado"}
-          </span>
+          <Link
+            to="/perfil"
+            className="text-white font-semibold mb-2 border border-white rounded px-2 py-1 bg-[#223B54] hover:underline"
+            onClick={() => setMenuOpen(false)}
+          >
+            {user.username}
+          </Link>
           <button
             onClick={handleLogout}
             className="bg-[#F39C12] text-[#1F3B4D] font-bold px-4 py-1 rounded border-2 border-white hover:bg-white hover:text-[#F39C12] transition mb-2 shadow-lg"
