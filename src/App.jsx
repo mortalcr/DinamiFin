@@ -1,4 +1,4 @@
-// src/App.jsx
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useUser } from "./context/UserContext";
 import Login from "./pages/Login";
@@ -7,7 +7,6 @@ import Dashboard from "./components/Dashboard";
 import DashboardHistorico from "./pages/DashboardHistorico";
 import ImportarDatos from "./components/ImportarDatos";
 import Perfil from "./pages/Perfil";
-
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
@@ -15,11 +14,9 @@ import PublicRoute from "./routes/PublicRoute";
 function App() {
   const { user, loading } = useUser();
   if (loading) return null;
-
   return (
-    <UserProvider>
-      <Router>
-        <Navbar />
+    <Router>
+      <Navbar />
       <Routes>
         <Route
           path="/"
@@ -76,10 +73,8 @@ function App() {
           }
         />
       </Routes>
-      </Router>
-    </UserProvider>
+    </Router>
   );
 }
 
 export default App;
-
