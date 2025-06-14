@@ -16,7 +16,6 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
     category: "",
   });
 
-  // Verificar si hay un usuario autenticado
   useEffect(() => {
     if (!user || !user.id) {
       console.error('No hay usuario autenticado');
@@ -44,7 +43,7 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
     
     onSubmit({
       ...record,
-      userId: user.id, // Incluir el ID del usuario
+      userId: user.id, 
       amount: Number.parseFloat(formData.amount),
       category: formData.category,
       date: record.date.split("T")[0],
@@ -60,7 +59,7 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
     if (window.confirm("¿Estás seguro de que deseas eliminar este registro?")) {
       onDelete({
         ...record,
-        userId: user.id // Incluir el ID del usuario
+        userId: user.id 
       });
     }
   };
