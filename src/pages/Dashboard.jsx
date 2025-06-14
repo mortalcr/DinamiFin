@@ -30,7 +30,6 @@ function Dashboard() {
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Bienvenido, {user.username}</h1>
       <p>Correo: {user.email}</p>
-      {/* Puedes mostrar metas y demás datos aquí */}
     </div>
   );
 }
