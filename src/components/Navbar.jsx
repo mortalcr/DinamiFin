@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useState } from "react";
@@ -18,19 +17,25 @@ export default function Navbar() {
 
   const navLinks = user && (
     <>
-      <Link to="/dashboard" className="bg-white text-[#1F3B4D] font-semibold rounded border-2 border-[#F39C12] hover:bg-[#F39C12] hover:text-white transition block px-4 py-1 mx-1 shadow">
+      <Link
+        to="/dashboard"
+        className="bg-white text-[#1F3B4D] hover:bg-[#F39C12] hover:text-white font-semibold px-4 py-2 rounded-lg transition"
+      >
         Dashboard
       </Link>
-      <Link to="/dashboardHistorico" className="bg-white text-[#1F3B4D] font-semibold rounded border-2 border-[#F39C12] hover:bg-[#F39C12] hover:text-white transition block px-4 py-1 mx-1 shadow">
+      <Link
+        to="/dashboardHistorico"
+        className="bg-white text-[#1F3B4D] hover:bg-[#F39C12] hover:text-white font-semibold px-4 py-2 rounded-lg transition"
+      >
         Histórico
       </Link>
     </>
   );
 
   return (
-    <nav className="fixed top-0 left-0 w-full bg-[#1F3B4D] px-4 py-3 flex items-center justify-between shadow-md z-30">
+    <nav className="fixed top-0 left-0 w-full bg-[#1F3B4D] px-6 py-3 flex items-center justify-between shadow z-50">
       <div className="flex items-center gap-4">
-        <span className="text-xl font-bold text-white tracking-wide mr-2">
+        <span className="text-2xl font-bold text-white tracking-wide mr-2">
           DinamiFin
         </span>
         <div className="hidden md:flex gap-4 items-center">
@@ -38,18 +43,18 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {user && (
           <>
             <Link
               to="/perfil"
-              className="text-black bg-white font-bold text-lg p-2 rounded border-2 border-[#F39C12] "
+              className="bg-[#E8EDF3] text-[#1F3B4D] font-semibold px-3 py-1 rounded-md text-sm hover:bg-white transition"
             >
               {user.username}
             </Link>
             <button
               onClick={handleLogout}
-              className="bg-[#F39C12] text-[#1F3B4D] font-bold px-4 py-1 rounded border-2 border-white hover:bg-white hover:text-[#F39C12] transition hidden md:inline-block shadow-lg"
+              className="text-white border border-white px-3 py-1 rounded-md text-sm hover:bg-white hover:text-[#1F3B4D] transition hidden md:inline-block"
             >
               Cerrar sesión
             </button>
@@ -58,29 +63,29 @@ export default function Navbar() {
 
         {/* Menú hamburguesa para móviles */}
         <button
-          className="md:hidden flex flex-col justify-center items-center w-10 h-10 focus:outline-none"
+          className="md:hidden flex flex-col justify-center items-center w-8 h-8"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Abrir menú"
         >
-          <span className={`block w-6 h-0.5 bg-white mb-1 transition-all ${menuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-          <span className={`block w-6 h-0.5 bg-white mb-1 transition-all ${menuOpen ? 'opacity-0' : ''}`}></span>
-          <span className={`block w-6 h-0.5 bg-white transition-all ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+          <span className={`block w-6 h-0.5 bg-white mb-1 transition-transform ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+          <span className={`block w-6 h-0.5 bg-white mb-1 transition-opacity ${menuOpen ? 'opacity-0' : ''}`} />
+          <span className={`block w-6 h-0.5 bg-white transition-transform ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
         </button>
       </div>
 
       {menuOpen && user && (
-        <div className="absolute top-full left-0 w-full bg-[#1F3B4D] flex flex-col items-center py-4 shadow-lg md:hidden animate-fade-in z-40">
+        <div className="absolute top-full left-0 w-full bg-[#1F3B4D] flex flex-col items-center py-4 shadow-md md:hidden z-40">
           {navLinks}
           <Link
             to="/perfil"
-            className="text-white font-semibold mb-2 border border-white rounded px-2 py-1 bg-[#223B54] hover:underline"
+            className="text-white text-sm font-medium mb-2 hover:text-blue-300 transition"
             onClick={() => setMenuOpen(false)}
           >
             {user.username}
           </Link>
           <button
             onClick={handleLogout}
-            className="bg-[#F39C12] text-[#1F3B4D] font-bold px-4 py-1 rounded border-2 border-white hover:bg-white hover:text-[#F39C12] transition mb-2 shadow-lg"
+            className="text-white border border-white px-3 py-1 rounded-md text-sm hover:bg-white hover:text-[#1F3B4D] transition"
           >
             Cerrar sesión
           </button>
