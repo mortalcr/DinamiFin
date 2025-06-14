@@ -18,7 +18,6 @@ function Register() {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Asegurarse de convertir a número si es una meta
     if (["meta_gasto", "meta_ahorro", "meta_inversion"].includes(name)) {
       setForm({ ...form, [name]: value === "" ? 0 : Number(value) });
     } else {
@@ -44,7 +43,6 @@ function Register() {
     e.preventDefault();
     setError("");
 
-    console.log("➡️ Datos del formulario enviados al backend:", form);
 
     if (!validateMetas()) {
       setError("La suma de las metas no puede superar el 100%.");
@@ -68,7 +66,6 @@ function Register() {
       alert("Cuenta creada exitosamente. Inicie sesión.");
       navigate("/");
     } catch (err) {
-      console.error("❌ Error al registrar:", err);
       const errData = err.response?.data?.detail;
       setError(Array.isArray(errData) ? errData : [errData || "Error al registrar usuario."]);
     }
