@@ -17,7 +17,13 @@ function Register() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+
+    // Asegurarse de convertir a número si es una meta
+    if (["meta_gasto", "meta_ahorro", "meta_inversion"].includes(name)) {
+      setForm({ ...form, [name]: value === "" ? 0 : Number(value) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const validateMetas = () => {
@@ -37,6 +43,8 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    console.log("➡️ Datos del formulario enviados al backend:", form);
 
     if (!validateMetas()) {
       setError("La suma de las metas no puede superar el 100%.");
@@ -60,6 +68,7 @@ function Register() {
       alert("Cuenta creada exitosamente. Inicie sesión.");
       navigate("/");
     } catch (err) {
+      console.error("❌ Error al registrar:", err);
       const errData = err.response?.data?.detail;
       setError(Array.isArray(errData) ? errData : [errData || "Error al registrar usuario."]);
     }
@@ -128,47 +137,24 @@ function Register() {
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-[#1F3B4D] font-medium mb-1" htmlFor="meta_gasto">
-              Meta de gasto (%)
-            </label>
-            <InputField
-              type="number"
-              name="meta_gasto"
-              placeholder="Ej: 40"
-              value={form.meta_gasto}
-              onChange={handleChange}
-              className="border border-[#95A5A6] bg-white text-[#1F3B4D]"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-[#1F3B4D] font-medium mb-1" htmlFor="meta_ahorro">
-              Meta de ahorro (%)
-            </label>
-            <InputField
-              type="number"
-              name="meta_ahorro"
-              placeholder="Ej: 30"
-              value={form.meta_ahorro}
-              onChange={handleChange}
-              className="border border-[#95A5A6] bg-white text-[#1F3B4D]"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-[#1F3B4D] font-medium mb-1" htmlFor="meta_inversion">
-              Meta de inversión (%)
-            </label>
-            <InputField
-              type="number"
-              name="meta_inversion"
-              placeholder="Ej: 30"
-              value={form.meta_inversion}
-              onChange={handleChange}
-              className="border border-[#95A5A6] bg-white text-[#1F3B4D]"
-            />
-          </div>
+          {/* Metas */}
+          {["meta_gasto", "meta_ahorro", "meta_inversion"].map((campo, index) => (
+            <div key={index} className="mb-4">
+              <label className="block text-[#1F3B4D] font-medium mb-1" htmlFor={campo}>
+                {`Meta de ${campo.split("_")[1]} (%)`}
+              </label>
+              <InputField
+                type="number"
+                name={campo}
+                placeholder="Ej: 30"
+                value={form[campo]}
+                onChange={handleChange}
+                min={0}
+                max={100}
+                className="border border-[#95A5A6] bg-white text-[#1F3B4D]"
+              />
+            </div>
+          ))}
 
           <button
             type="submit"
