@@ -88,7 +88,13 @@ export default function HistoricoFinanciero() {
   const [tipoGrafico, setTipoGrafico] = useState("line");
   const { user } = useUser();
   const userId = user?.id;
-  const { chartData, chartOptions, datos } = useHistoricoFinancieroViewModel(
+  const {
+    chartData,
+    chartOptions,
+    datos,
+    totalMetaPeriodo,
+    totalHistoricoPeriodo,
+  } = useHistoricoFinancieroViewModel(
     historicos,
     tiposGraficos,
     periodo,
@@ -100,24 +106,33 @@ export default function HistoricoFinanciero() {
   const tipoMeta = esMeta ? historico.replace("meta_", "") : null;
   const historicoActual = historicos.find((h) => h.value === historico);
   const ultimoDato = datos[datos.length - 1] || {};
+  const esMetaGasto = historico === "meta_gasto";
   const estadisticasMetas = useMemo(
     () =>
       esMeta
         ? datos.reduce(
             (acc, dato) => {
-              if ((dato.real ?? 0) >= (dato.goal ?? 0)) acc.cumplidas++;
-              else acc.noCumplidas++;
+              if (esMetaGasto) {
+                if ((dato.real ?? 0) <= (dato.goal ?? 0)) acc.cumplidas++;
+                else acc.noCumplidas++;
+              } else {
+                if ((dato.real ?? 0) >= (dato.goal ?? 0)) acc.cumplidas++;
+                else acc.noCumplidas++;
+              }
               return acc;
             },
             { cumplidas: 0, noCumplidas: 0 }
           )
         : null,
-    [datos, esMeta]
+    [datos, esMeta, esMetaGasto]
   );
   const cumplioMeta =
     esMeta && ultimoDato
-      ? (ultimoDato.real ?? 0) >= (ultimoDato.goal ?? 0)
+      ? esMetaGasto
+        ? (ultimoDato.real ?? 0) <= (ultimoDato.goal ?? 0)
+        : (ultimoDato.real ?? 0) >= (ultimoDato.goal ?? 0)
       : false;
+
   const porcentajeCumplimiento =
     estadisticasMetas && datos.length > 0
       ? Math.round((estadisticasMetas.cumplidas / datos.length) * 100)
@@ -207,6 +222,8 @@ export default function HistoricoFinanciero() {
           X={X}
           Calendar={Calendar}
           TrendingUp={TrendingUp}
+          totalMetaPeriodo={totalMetaPeriodo}
+          totalHistoricoPeriodo={totalHistoricoPeriodo}
         />
         <div className="mb-6 overflow-x-auto scrollbar-hide px-0 sm:px-0">
           <ChartTabs
