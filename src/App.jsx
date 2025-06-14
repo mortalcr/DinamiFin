@@ -14,8 +14,6 @@ import PublicRoute from "./routes/PublicRoute";
 
 function App() {
   const { user, loading } = useUser();
-
-  // Mientras carga el estado del usuario, no mostrar nada
   if (loading) return null;
 
   return (
