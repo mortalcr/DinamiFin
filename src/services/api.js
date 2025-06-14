@@ -68,6 +68,42 @@ export const getCurrentMonthIncome = async (userId) => {
   return response.json();
 };
 
+export const createIncome = async (userId, data) => {
+  const response = await fetch(`${API_BASE_URL}/api/incomes/${userId}`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Error al crear el ingreso");
+  }
+
+  return response.json();
+};
+
+export const updateIncome = async (userId, date, data) => {
+  const response = await fetch(`${API_BASE_URL}/api/incomes/${userId}/${date}`, {
+    method: "PUT",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Error al actualizar el ingreso");
+  }
+
+  return response.json();
+};
+
 // Servicios para Gastos
 export const getExpenses = async (userId) => {
   const response = await fetch(`${API_BASE_URL}/datos/gastos/${userId}`);

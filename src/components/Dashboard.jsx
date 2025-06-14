@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AddRecordForm } from "./AddRecord";
 import { EditRecord } from "./EditRecord";
+import EditIncomeModal from "./EditIncomeModal";
 import {
   FaPlus,
   FaChartLine,
@@ -8,6 +9,9 @@ import {
   FaPiggyBank,
   FaDollarSign,
   FaFileImport,
+  FaEdit,
+  FaCheck,
+  FaTimes,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
@@ -25,6 +29,8 @@ import {
   deleteSaving,
   deleteInvestment,
   getCurrentMonthIncome,
+  createIncome,
+  updateIncome,
 } from "../services/api";
 
 const Dashboard = () => {
@@ -39,6 +45,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   
   // State for data
   const [records, setRecords] = useState([]);
@@ -286,6 +293,20 @@ const Dashboard = () => {
     }
   };
 
+  const handleIncomeSubmit = async (data) => {
+    try {
+      if (currentMonthTotals.income > 0) {
+        await updateIncome(user.id, data.date, data);
+      } else {
+        await createIncome(user.id, data);
+      }
+      await loadData();
+      showNotification("Ingreso mensual actualizado correctamente");
+    } catch (err) {
+      throw new Error(err.message || "Error al guardar el ingreso mensual");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F2F3F4] flex flex-col items-center justify-center p-4">
@@ -307,7 +328,10 @@ const Dashboard = () => {
           <p>{error}</p>
         </div>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            setError(null);
+            loadData();
+          }}
           className="bg-[#1F3B4D] hover:bg-[#F39C12] text-white font-semibold py-2 px-4 rounded transition-colors"
         >
           Reintentar
@@ -354,16 +378,36 @@ const Dashboard = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-[#3498DB]/10 rounded-lg">
-                <FaDollarSign className="w-6 h-6 text-[#3498DB]" />
-              </div>
-              <div>
-                <p className="text-[#95A5A6] text-sm">Ingresos del Mes</p>
-                <p className="text-2xl font-bold text-[#1F3B4D]">
-                  ${currentMonthTotals.income.toLocaleString('es-GT')}
-                </p>
+          <div 
+            className="bg-white rounded-xl shadow-md p-6 mb-6 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => setIsIncomeModalOpen(true)}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold text-[#1F3B4D] mb-2">
+                  Ingreso Mensual Total
+                </h2>
+                {loading ? (
+                  <p className="text-gray-500">Cargando...</p>
+                ) : error ? (
+                  <div className="space-y-2">
+                    <p className="text-red-500">{error}</p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setError(null);
+                        loadData();
+                      }}
+                      className="text-sm px-4 py-2 bg-[#1F3B4D] text-white rounded-lg hover:bg-[#1F3B4D]/90 transition-colors"
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-[#2ECC71]">
+                    ${currentMonthTotals.income.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -521,6 +565,16 @@ const Dashboard = () => {
         onSubmit={handleEditRecord}
         onDelete={() => handleDeleteRecord(selectedRecord)}
         record={selectedRecord}
+      />
+
+      <EditIncomeModal
+        isOpen={isIncomeModalOpen}
+        onClose={() => setIsIncomeModalOpen(false)}
+        onSubmit={handleIncomeSubmit}
+        initialData={currentMonthTotals.income > 0 ? { 
+          date: new Date().toISOString(), 
+          amount: currentMonthTotals.income 
+        } : null}
       />
     </div>
   );
