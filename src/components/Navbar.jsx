@@ -24,9 +24,6 @@ export default function Navbar() {
       <Link to="/dashboardHistorico" className="bg-white text-[#1F3B4D] font-semibold rounded border-2 border-[#F39C12] hover:bg-[#F39C12] hover:text-white transition block px-4 py-1 mx-1 shadow">
         Histórico
       </Link>
-      <Link to="/mesActual" className="bg-white text-[#1F3B4D] font-semibold rounded border-2 border-[#F39C12] hover:bg-[#F39C12] hover:text-white transition block px-4 py-1 mx-1 shadow">
-        Mes Actual
-      </Link>
     </>
   );
 

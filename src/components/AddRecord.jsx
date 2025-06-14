@@ -17,6 +17,7 @@ import {
 
 const API_BASE_URL = "http://localhost:8000";
 
+
 const categories = {
   gasto: [
     "vivienda",
@@ -52,6 +53,7 @@ export const AddRecordForm = ({
   initialData,
   onDelete,
 }) => {
+  const { user } = useUser();
   const [formData, setFormData] = useState({
     type: "gasto",
     amount: "",
@@ -156,10 +158,10 @@ export const AddRecordForm = ({
 
       console.log("Enviando datos:", {
         ...requestBody,
-        endpoint: `${endpoint}/1`,
+        endpoint: `${endpoint}/${user.id}`,
       });
 
-      let response = await fetch(`${endpoint}/1`, {
+      let response = await fetch(`${endpoint}/${user.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -172,7 +174,7 @@ export const AddRecordForm = ({
 
       if (!response.ok && data.detail && data.detail.includes("ya existe")) {
         console.log("Registro existente, intentando actualizar...");
-        response = await fetch(`${endpoint}/1`, {
+        response = await fetch(`${endpoint}/${user.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -187,7 +189,7 @@ export const AddRecordForm = ({
           throw new Error(data.detail || "Error al actualizar el registro");
         }
       } else if (!response.ok) {
-        const checkResponse = await fetch(`${endpoint}/1`);
+        const checkResponse = await fetch(`${endpoint}/${user.id}`);
         const checkData = await checkResponse.json();
 
         const recordExists = checkData.some((record) => {
