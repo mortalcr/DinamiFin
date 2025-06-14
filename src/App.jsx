@@ -1,7 +1,6 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useUser } from "./context/UserContext";
-
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./components/Dashboard";
@@ -20,8 +19,9 @@ function App() {
   if (loading) return null;
 
   return (
-    <Router>
-      <Navbar />
+    <UserProvider>
+      <Router>
+        <Navbar />
       <Routes>
         <Route
           path="/"
@@ -78,7 +78,8 @@ function App() {
           }
         />
       </Routes>
-    </Router>
+      </Router>
+    </UserProvider>
   );
 }
 

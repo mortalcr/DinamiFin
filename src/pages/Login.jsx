@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import { login as loginAPI } from "../services/authService";
@@ -30,12 +30,15 @@ function Login() {
       const data = await loginAPI(email, password);
       login(data.access_token); 
     } catch (err) {
-      if (err.response?.status === 401) {
+      console.error('Error en el login:', err);
+      if (err.response?.status === 401 || err.message?.includes('401')) {
         setError("Correo o contraseña incorrectos.");
-      } else if (err.response?.status === 422) {
+      } else if (err.response?.status === 422 || err.message?.includes('422')) {
         setError("Formato inválido. Verifica tu correo y contraseña.");
+      } else if (err.message) {
+        setError(err.message);
       } else {
-        setError("Error al iniciar sesión. Intenta de nuevo más tarde.");
+        setError("Error al conectar con el servidor. Intenta de nuevo más tarde.");
       }
     }
   };

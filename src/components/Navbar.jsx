@@ -1,4 +1,4 @@
-// src/components/Navbar.jsx
+
 import { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
@@ -57,6 +57,21 @@ function Navbar() {
           </div>
         )}
       </div>
+      {/* Menú desplegable para móviles */}
+      {menuOpen && (
+        <div className="absolute top-full left-0 w-full bg-[#1F3B4D] flex flex-col items-center py-4 shadow-lg md:hidden animate-fade-in z-40">
+          {navLinks}
+          <span className="text-white font-semibold mb-2 border border-white rounded px-2 py-1 bg-[#223B54]">
+            {user ? user.username : "Invitado"}
+          </span>
+          <button
+            onClick={handleLogout}
+            className="bg-[#F39C12] text-[#1F3B4D] font-bold px-4 py-1 rounded border-2 border-white hover:bg-white hover:text-[#F39C12] transition mb-2 shadow-lg"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      )}
     </nav>
   );
 }
