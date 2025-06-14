@@ -32,6 +32,110 @@ import {
   createIncome,
   updateIncome,
 } from "../services/api";
+import {
+  fetchExpenseGoalHistory,
+  fetchSavingGoalHistory,
+  fetchInvestmentGoalHistory,
+} from "../services/financeHistoryApi";
+
+const GoalIndicators = ({ currentMonthTotals, loading, goals }) => {
+  const calculatePercentage = (value, total) => {
+    if (!total || total === 0) return 0;
+    return Math.round((value / total) * 100);
+  };
+
+  const getStatusIcon = (percentage, target) => {
+    if (percentage >= target) {
+      return <FaCheck className="text-green-500" />;
+    }
+    return <FaTimes className="text-red-500" />;
+  };
+
+  const expensePercentage = calculatePercentage(currentMonthTotals.expenses, currentMonthTotals.income);
+  const savingsPercentage = calculatePercentage(currentMonthTotals.savings, currentMonthTotals.income);
+  const investmentPercentage = calculatePercentage(currentMonthTotals.investments, currentMonthTotals.income);
+
+  // Obtener la meta actual del mes
+  const getCurrentMonthGoal = (goalData) => {
+    if (!goalData || goalData.length === 0) return 0;
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const currentGoal = goalData.find(g => g.period === currentMonth);
+    return currentGoal ? currentGoal.goal : 0;
+  };
+
+  const expenseGoal = getCurrentMonthGoal(goals.expense);
+  const savingGoal = getCurrentMonthGoal(goals.saving);
+  const investmentGoal = getCurrentMonthGoal(goals.investment);
+
+  if (loading) {
+    return (
+      <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Indicadores de Cumplimiento de Metas</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-4 border rounded-lg bg-white animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
+              <div className="h-2 bg-gray-200 rounded w-full"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">Indicadores de Cumplimiento de Metas</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 border rounded-lg bg-white">
+          <h3 className="font-medium mb-2 text-gray-700">Meta de Gasto Mensual</h3>
+          <div className="flex items-center justify-between">
+            <span className="text-2xl font-bold text-gray-800">{expensePercentage}%</span>
+            {getStatusIcon(expensePercentage, expenseGoal)}
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+            <div 
+              className="bg-blue-600 h-2.5 rounded-full" 
+              style={{ width: `${Math.min(expensePercentage, 100)}%` }}
+            ></div>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">Meta: {expenseGoal}% del ingreso</p>
+        </div>
+
+        <div className="p-4 border rounded-lg bg-white">
+          <h3 className="font-medium mb-2 text-gray-700">Meta de Ahorro Mensual</h3>
+          <div className="flex items-center justify-between">
+            <span className="text-2xl font-bold text-gray-800">{savingsPercentage}%</span>
+            {getStatusIcon(savingsPercentage, savingGoal)}
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+            <div 
+              className="bg-green-600 h-2.5 rounded-full" 
+              style={{ width: `${Math.min(savingsPercentage, 100)}%` }}
+            ></div>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">Meta: {savingGoal}% del ingreso</p>
+        </div>
+
+        <div className="p-4 border rounded-lg bg-white">
+          <h3 className="font-medium mb-2 text-gray-700">Meta de Inversión Mensual</h3>
+          <div className="flex items-center justify-between">
+            <span className="text-2xl font-bold text-gray-800">{investmentPercentage}%</span>
+            {getStatusIcon(investmentPercentage, investmentGoal)}
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+            <div 
+              className="bg-purple-600 h-2.5 rounded-full" 
+              style={{ width: `${Math.min(investmentPercentage, 100)}%` }}
+            ></div>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">Meta: {investmentGoal}% del ingreso</p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -60,6 +164,11 @@ const Dashboard = () => {
     savings: 0,
     investments: 0,
     income: 0
+  });
+  const [goals, setGoals] = useState({
+    expense: [],
+    saving: [],
+    investment: []
   });
 
   // Show notification helper function
@@ -102,14 +211,40 @@ const Dashboard = () => {
       setError(null);
       
       // Hacer todas las peticiones en paralelo
-      const [expenses, savings, investments, monthlyIncome] = await Promise.all([
+      const [
+        expenses, 
+        savings, 
+        investments, 
+        monthlyIncome,
+        expenseGoals,
+        savingGoals,
+        investmentGoals
+      ] = await Promise.all([
         getExpenses(user.id),
         getSavings(user.id),
         getInvestments(user.id),
-        getCurrentMonthIncome(user.id)
+        getCurrentMonthIncome(user.id),
+        fetchExpenseGoalHistory(user.id, "1m"),
+        fetchSavingGoalHistory(user.id, "1m"),
+        fetchInvestmentGoalHistory(user.id, "1m")
       ]);
       
-      console.log('Datos recibidos:', { expenses, savings, investments, monthlyIncome });
+      console.log('Datos recibidos:', { 
+        expenses, 
+        savings, 
+        investments, 
+        monthlyIncome,
+        expenseGoals,
+        savingGoals,
+        investmentGoals
+      });
+
+      // Actualizar las metas
+      setGoals({
+        expense: expenseGoals.data,
+        saving: savingGoals.data,
+        investment: investmentGoals.data
+      });
 
       // Calcular totales generales
       const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -454,6 +589,12 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+        <GoalIndicators 
+          currentMonthTotals={currentMonthTotals} 
+          loading={loading} 
+          goals={goals}
+        />
 
         <div className="bg-white rounded-lg shadow-sm border border-[#F2F3F4]">
           <div className="p-6 border-b border-[#F2F3F4]">
