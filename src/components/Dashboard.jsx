@@ -182,39 +182,37 @@ const Dashboard = () => {
     investment: [],
   })
 
-  // Show notification helper function
   const showNotification = (message, type = "success") => {
     setNotification({ message, type })
     setTimeout(() => setNotification(null), 3000)
   }
 
-  // Function to calculate chart data for pie charts
   const getChartData = (type) => {
     const typeRecords = records.filter((record) => record.type === type)
     const categoryTotals = {}
 
-    // Initialize all categories with 0
+
     categories[type].forEach((category) => {
       categoryTotals[category] = 0
     })
 
-    // Sum amounts by category
+
     typeRecords.forEach((record) => {
       if (categoryTotals.hasOwnProperty(record.category)) {
         categoryTotals[record.category] += record.amount
       }
     })
 
-    // Convert to chart format and filter out zero values
+
     const chartData = Object.entries(categoryTotals)
       .filter(([_, value]) => value > 0)
       .map(([category, amount]) => ({
         name: category.charAt(0).toUpperCase() + category.slice(1),
         value: amount,
-        percentage: 0, // Will be calculated below
+        percentage: 0,
       }))
 
-    // Calculate percentages
+
     const total = chartData.reduce((sum, item) => sum + item.value, 0)
     if (total > 0) {
       chartData.forEach((item) => {
@@ -225,7 +223,7 @@ const Dashboard = () => {
     return chartData
   }
 
-  // Función para obtener el primer y último día del mes actual
+
   const getCurrentMonthRange = () => {
     const today = new Date()
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
@@ -233,14 +231,14 @@ const Dashboard = () => {
     return { firstDay, lastDay }
   }
 
-  // Función para verificar si una fecha está en el mes actual
+
   const isDateInCurrentMonth = (dateString) => {
     const date = new Date(dateString)
     const today = new Date()
     return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()
   }
 
-  // Close dropdown when clicking outside
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -254,7 +252,7 @@ const Dashboard = () => {
     }
   }, [])
 
-  // Filter records based on selected filter
+  
   const getFilteredRecords = () => {
     let filtered = records
 
@@ -273,11 +271,11 @@ const Dashboard = () => {
       })
     }
 
-    // Sort by date (most recent first) and limit to visible records
+  
     return filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, visibleRecords)
   }
 
-  // Get record counts by category
+
   const getRecordCounts = () => {
     return {
       todos: records.length,
@@ -287,7 +285,7 @@ const Dashboard = () => {
     }
   }
 
-  // Function to load data
+  
   const loadData = async () => {
     console.log("Usuario actual en Dashboard:", user)
 
@@ -304,7 +302,7 @@ const Dashboard = () => {
       setLoading(true)
       setError(null)
 
-      // Hacer todas las peticiones en paralelo
+      
       const [expenses, savings, investments, monthlyIncome, expenseGoals, savingGoals, investmentGoals] =
         await Promise.all([
           getExpenses(user.id),
@@ -407,10 +405,10 @@ const Dashboard = () => {
     }
   }
 
-  // Cargar datos del dashboard cuando cambie el usuario
+  
   useEffect(() => {
     loadData()
-  }, [user?.id]) // Recargar cuando cambie el ID del usuario
+  }, [user?.id]) 
 
   const handleAddRecord = async (data) => {
     if (!user || !user.id) {
@@ -419,16 +417,16 @@ const Dashboard = () => {
     }
 
     try {
-      // Asegurarse de que el ID del usuario esté incluido en los datos
+      
       const recordData = {
         ...data,
         userId: user.id,
       }
 
-      // Verificar si ya existe un registro para la fecha y el tipo
+      
       const existingRecords = await getRecordsForDate(user.id, data.date, data.type);
       if (existingRecords.length > 0) {
-        // Actualizar el registro existente
+       
         if (data.type === "gasto") {
           await updateExpense(user.id, data.date, {
             amount: data.amount,
@@ -470,7 +468,7 @@ const Dashboard = () => {
         showNotification("Registro guardado exitosamente")
       }
 
-      // Recargar los datos
+   
       await loadData()
       setIsAddFormOpen(false)
     } catch (err) {
@@ -487,7 +485,6 @@ const Dashboard = () => {
     }
 
     try {
-      // Verificar que el registro pertenezca al usuario actual
       if (data.userId && data.userId !== user.id) {
         throw new Error("No tienes permiso para editar este registro")
       }
@@ -522,7 +519,7 @@ const Dashboard = () => {
     }
 
     try {
-      // Verificar que el registro pertenezca al usuario actual
+      
       if (record.userId && record.userId !== user.id) {
         throw new Error("No tienes permiso para eliminar este registro")
       }
@@ -610,7 +607,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Enhanced Header */}
+      
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
@@ -636,9 +633,9 @@ const Dashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Financial Overview Cards */}
+       
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Income Card */}
+          
           <div
             className="bg-white rounded-xl shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => setIsIncomeModalOpen(true)}
@@ -658,7 +655,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Expenses Card */}
+          
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-[#E74C3C]/10 rounded-lg">
@@ -673,7 +670,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Savings Card */}
+          
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-[#2ECC71]/10 rounded-lg">
@@ -688,7 +685,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Investments Card */}
+          
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-[#F39C12]/10 rounded-lg">
@@ -706,11 +703,11 @@ const Dashboard = () => {
 
         <GoalIndicators currentMonthTotals={currentMonthTotals} loading={loading} goals={goals} />
 
-        {/* New layout with records on the left and space for charts on the right */}
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Records section - takes 2/3 of the space */}
+          
           <div className="lg:col-span-2">
-            {/* Recent Records Section */}
+            
             <div className="bg-white rounded-2xl shadow-lg border border-[#E5E7EB]">
               <div className="p-6 border-b border-[#F1F3F4]">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -722,7 +719,7 @@ const Dashboard = () => {
                     <p className="text-[#95A5A6] text-sm mt-1">Últimos movimientos financieros</p>
                   </div>
 
-                  {/* Enhanced Filter Dropdown */}
+                  
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
@@ -756,7 +753,7 @@ const Dashboard = () => {
                       </svg>
                     </button>
 
-                    {/* Dropdown Menu */}
+                    
                     {isFilterDropdownOpen && (
                       <div className="absolute top-full right-0 mt-1 w-full sm:w-64 bg-[#1F3B4D] border border-[#2C3E50] rounded-lg shadow-xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                         <div className="p-1">
@@ -884,7 +881,7 @@ const Dashboard = () => {
                       ))}
                     </div>
 
-                    {/* Load more button */}
+                    
                     {records.filter((record) => {
                       if (recordFilter === "todos") return true
                       switch (recordFilter) {
@@ -921,7 +918,7 @@ const Dashboard = () => {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-              {/* Expenses Chart */}
+              
               <div className="text-center">
                 <h4 className="text-sm font-medium text-[#E74C3C] mb-3 flex items-center justify-center gap-2">
                   <FaWallet className="w-4 h-4" />
@@ -956,7 +953,7 @@ const Dashboard = () => {
                 )}
               </div>
 
-              {/* Savings Chart */}
+              =
               <div className="text-center">
                 <h4 className="text-sm font-medium text-[#3498DB] mb-3 flex items-center justify-center gap-2">
                   <FaPiggyBank className="w-4 h-4" />
@@ -991,7 +988,7 @@ const Dashboard = () => {
                 )}
               </div>
 
-              {/* Investments Chart */}
+              
               <div className="text-center">
                 <h4 className="text-sm font-medium text-[#F39C12] mb-3 flex items-center justify-center gap-2">
                   <FaChartLine className="w-4 h-4" />

@@ -126,7 +126,7 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in-0 duration-300">
       <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-lg w-full border border-white/20 animate-in zoom-in-95 duration-300">
-        {/* Header con gradiente */}
+        
         <div
           className={`${typeConfig.bgColor} p-6 rounded-t-2xl border-b border-white/20`}
         >
@@ -160,7 +160,7 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Fecha (solo lectura) */}
+          
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-semibold text-[#1F3B4D] uppercase tracking-wide">
               <FaCalendarAlt className="w-4 h-4" />
@@ -180,7 +180,7 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
             </p>
           </div>
 
-          {/* Monto */}
+          
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-semibold text-[#1F3B4D] uppercase tracking-wide">
               <FaDollarSign className="w-4 h-4" />
@@ -203,7 +203,7 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
             </div>
           </div>
 
-          {/* Categoría */}
+          
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-semibold text-[#1F3B4D] uppercase tracking-wide">
               <FaTag className="w-4 h-4" />
@@ -248,7 +248,7 @@ export const EditRecord = ({ isOpen, onClose, onSubmit, onDelete, record }) => {
             </div>
           </div>
 
-          {/* Botones de acción */}
+      
           <div className="flex gap-3 pt-6 border-t border-[#F2F3F4]">
             <button
               type="button"
